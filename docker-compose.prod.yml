@@ -1,24 +1,77 @@
 version: "3.9"
 
-# Production overrides — used with Cloud Run or GCE
-# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+# Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Before first run:
+#   1. Copy .env.example → .env and fill in all values
+#   2. Run:  ./deploy/nginx/init-ssl.sh   (gets the Let's Encrypt cert)
+#   3. Then: make prod-up
 
 services:
 
+  # ── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
     build:
-      target: runner          # production: nginx stage
-    ports:
-      - "80:80"
+      target: runner          # nginx static-file stage
+    # No direct port exposure — nginx-proxy routes traffic
+    ports: []
     environment:
-      - VITE_POCKETBASE_URL=${POCKETBASE_PUBLIC_URL}
+      - VITE_POCKETBASE_URL=https://db.${DOMAIN_NAME}
 
+  # ── PocketBase backend ────────────────────────────────────────────────────────
   backend:
     restart: always
+    # Remove direct public exposure — only reachable via nginx-proxy internally
+    ports: []
     environment:
       - PB_ENCRYPTION_KEY=${PB_ENCRYPTION_KEY}
 
+  # ── Google ADK ────────────────────────────────────────────────────────────────
   adk:
     restart: always
+    ports: []
     env_file:
       - ./adk/.env.prod
+
+  # ── nginx reverse proxy ───────────────────────────────────────────────────────
+  # Handles TLS termination and routes db.<DOMAIN_NAME> → backend:8090
+  nginx-proxy:
+    build:
+      context: ./deploy/nginx
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - certbot-certs:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    depends_on:
+      - backend
+
+  # ── Certbot (renewal only) ────────────────────────────────────────────────────
+  # Runs certbot renew every 12 hours; nginx-proxy is reloaded on renewal.
+  # For the INITIAL certificate use:  ./deploy/nginx/init-ssl.sh
+  certbot:
+    image: certbot/certbot:latest
+    restart: always
+    volumes:
+      - certbot-certs:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "
+        trap exit TERM;
+        while :; do
+          certbot renew --webroot --webroot-path=/var/www/certbot --quiet;
+          sleep 12h & wait $${!};
+        done
+      "
+    depends_on:
+      - nginx-proxy
+
+volumes:
+  certbot-certs:
+  certbot-www:

@@ -27,3 +27,9 @@ Thumbs.db
 
 # Docker
 *.env.prod
+
+# Root env
+.env
+
+# Certbot / TLS (managed as Docker named volumes; never commit certs)
+certbot-data/

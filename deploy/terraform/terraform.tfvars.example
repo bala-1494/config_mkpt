@@ -4,3 +4,11 @@ zone                  = "us-central1-a"
 instance_machine_type = "e2-standard-2"
 github_owner          = "your-github-username-or-org"
 github_repo           = "config_mkpt"
+
+# Domain — PocketBase will be served at https://db.<domain_name>
+domain_name           = "example.com"
+
+# Set to true to let Terraform create a Cloud DNS managed zone.
+# If your domain is already managed elsewhere, set to false and manually
+# create an A record:  db.<domain_name>  →  <static_ip output>
+create_dns_zone       = true

@@ -1,0 +1,6 @@
+project_id            = "your-gcp-project-id"
+region                = "us-central1"
+zone                  = "us-central1-a"
+instance_machine_type = "e2-standard-2"
+github_owner          = "your-github-username-or-org"
+github_repo           = "config_mkpt"

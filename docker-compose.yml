@@ -1,0 +1,50 @@
+version: "3.9"
+
+# Local development stack
+# Usage: docker compose up --build
+
+services:
+
+  # ── Frontend (React + Vite dev server) ──────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      target: builder          # dev: use the Node build stage only
+      dockerfile: Dockerfile
+    command: ["npm", "run", "dev"]
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_POCKETBASE_URL=http://localhost:8090
+    depends_on:
+      - backend
+
+  # ── PocketBase (self-hosted backend) ────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    volumes:
+      - pb_data:/pb/pb_data
+
+  # ── Google ADK service ───────────────────────────────────────────────────────
+  adk:
+    build:
+      context: ./adk
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./adk:/app
+    env_file:
+      - ./adk/.env
+    depends_on:
+      - backend
+
+volumes:
+  pb_data:

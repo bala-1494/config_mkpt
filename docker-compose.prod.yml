@@ -1,0 +1,24 @@
+version: "3.9"
+
+# Production overrides — used with Cloud Run or GCE
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+
+  frontend:
+    build:
+      target: runner          # production: nginx stage
+    ports:
+      - "80:80"
+    environment:
+      - VITE_POCKETBASE_URL=${POCKETBASE_PUBLIC_URL}
+
+  backend:
+    restart: always
+    environment:
+      - PB_ENCRYPTION_KEY=${PB_ENCRYPTION_KEY}
+
+  adk:
+    restart: always
+    env_file:
+      - ./adk/.env.prod

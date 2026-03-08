@@ -1,0 +1,29 @@
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Python / ADK
+adk/__pycache__/
+adk/.venv/
+adk/*.pyc
+adk/.env
+adk/.env.prod
+
+# PocketBase data
+backend/pb_data/
+
+# Terraform
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.backup
+deploy/terraform/.terraform.lock.hcl
+deploy/terraform/terraform.tfvars
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.env.prod

@@ -22,6 +22,9 @@ VOLUME ["/pb/pb_data"]
 COPY pb_migrations/ /pb/pb_migrations/
 COPY pb_hooks/      /pb/pb_hooks/
 
+# Cloud Run injects PORT; default to 8090 for local/compose use.
+ENV PORT=8090
 EXPOSE 8090
 
-ENTRYPOINT ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090"]
+# Use shell form so $PORT is expanded at runtime.
+CMD /pb/pocketbase serve --http=0.0.0.0:${PORT}

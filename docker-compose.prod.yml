@@ -18,6 +18,7 @@ services:
     ports: []
     environment:
       - VITE_POCKETBASE_URL=https://db.${DOMAIN_NAME}
+      - PORT=80
 
   # ── PocketBase backend ────────────────────────────────────────────────────────
   backend:

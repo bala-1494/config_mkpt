@@ -19,6 +19,7 @@ services:
       - /app/node_modules
     environment:
       - VITE_POCKETBASE_URL=http://localhost:8090
+      - PORT=5173
     depends_on:
       - backend
 

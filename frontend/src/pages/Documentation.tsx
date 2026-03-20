@@ -195,19 +195,24 @@ export default function Documentation() {
   // Load existing docs
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('seller_documents')
-      .select('*')
-      .eq('seller', user.id)
-      .then(({ data }) => setPrimaryDocs((data ?? []) as SellerDocument[]))
-      .catch(() => {})
+    const fetchDocs = async () => {
+      try {
+        const { data } = await supabase
+          .from('seller_documents')
+          .select('*')
+          .eq('seller', user.id)
+        setPrimaryDocs((data ?? []) as SellerDocument[])
+      } catch {}
 
-    supabase
-      .from('brand_docs')
-      .select('*')
-      .eq('seller', user.id)
-      .then(({ data }) => setBrandDocs((data ?? []) as BrandDoc[]))
-      .catch(() => {})
+      try {
+        const { data } = await supabase
+          .from('brand_docs')
+          .select('*')
+          .eq('seller', user.id)
+        setBrandDocs((data ?? []) as BrandDoc[])
+      } catch {}
+    }
+    void fetchDocs()
   }, [user])
 
   const handlePrimaryUpload = async (docType: DocType, file: File) => {

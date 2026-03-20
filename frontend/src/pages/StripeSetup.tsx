@@ -12,18 +12,20 @@ export default function StripeSetup() {
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('seller_profiles')
-      .select('id, stripe_connected')
-      .eq('seller', user.id)
-      .single()
-      .then(({ data }) => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from('seller_profiles')
+          .select('id, stripe_connected')
+          .eq('seller', user.id)
+          .single()
         if (data) {
           setProfileId(data.id)
           if (data.stripe_connected) setState('connected')
         }
-      })
-      .catch(() => {})
+      } catch {}
+    }
+    void fetchProfile()
   }, [user])
 
   const handleConnect = () => {

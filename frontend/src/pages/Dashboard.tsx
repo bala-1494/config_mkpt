@@ -108,13 +108,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('seller_profiles')
-      .select('*')
-      .eq('seller', user.id)
-      .single()
-      .then(({ data }) => setProfile(data as SellerProfile | null))
-      .catch(() => setProfile(null))
+    const fetchProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from('seller_profiles')
+          .select('*')
+          .eq('seller', user.id)
+          .single()
+        setProfile(data as SellerProfile | null)
+      } catch {
+        setProfile(null)
+      }
+    }
+    void fetchProfile()
   }, [user])
 
   const tasks = computeTasks(profile, profile?.stripe_connected ?? false)

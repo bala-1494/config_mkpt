@@ -146,12 +146,13 @@ export default function ProfilePage() {
   // Load profile
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('seller_profiles')
-      .select('*')
-      .eq('seller', user.id)
-      .single()
-      .then(({ data }) => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from('seller_profiles')
+          .select('*')
+          .eq('seller', user.id)
+          .single()
         if (data) {
           setProfileId(data.id)
           setProfile(data as SellerProfile)
@@ -159,11 +160,12 @@ export default function ProfilePage() {
           setProfileId(null)
           setProfile(emptyProfile())
         }
-      })
-      .catch(() => {
+      } catch {
         setProfileId(null)
         setProfile(emptyProfile())
-      })
+      }
+    }
+    void fetchProfile()
   }, [user])
 
   const save = useCallback(async () => {

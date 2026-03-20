@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import pb from '../lib/pocketbase'
+import { supabase } from '../lib/supabase'
 
 type ConnectState = 'idle' | 'connecting' | 'connected'
 
@@ -12,11 +12,16 @@ export default function StripeSetup() {
 
   useEffect(() => {
     if (!user) return
-    pb.collection('seller_profiles')
-      .getFirstListItem(`seller="${user.id}"`)
-      .then((rec) => {
-        setProfileId(rec.id)
-        if (rec.stripe_connected) setState('connected')
+    supabase
+      .from('seller_profiles')
+      .select('id, stripe_connected')
+      .eq('seller', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setProfileId(data.id)
+          if (data.stripe_connected) setState('connected')
+        }
       })
       .catch(() => {})
   }, [user])
@@ -40,17 +45,20 @@ export default function StripeSetup() {
       clearInterval(interval)
       setProgress(100)
 
-      // Persist to PocketBase
+      // Persist to Supabase
       try {
         if (profileId) {
-          await pb.collection('seller_profiles').update(profileId, { stripe_connected: true })
+          await supabase
+            .from('seller_profiles')
+            .update({ stripe_connected: true })
+            .eq('id', profileId)
         } else if (user) {
-          const rec = await pb.collection('seller_profiles').create({
-            seller: user.id,
-            stripe_connected: true,
-            profile_status: 'yet_to_submit',
-          })
-          setProfileId(rec.id)
+          const { data } = await supabase
+            .from('seller_profiles')
+            .insert({ seller: user.id, stripe_connected: true, profile_status: 'yet_to_submit' })
+            .select('id')
+            .single()
+          if (data) setProfileId(data.id)
         }
       } catch {
         // Silent fail — UI still shows connected

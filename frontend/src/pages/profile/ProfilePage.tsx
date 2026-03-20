@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import pb from '../../lib/pocketbase'
+import { supabase } from '../../lib/supabase'
 import type { SellerProfile, Address, Warehouse } from '../../types'
 import StatusBadge from '../../components/StatusBadge'
 
@@ -146,11 +146,19 @@ export default function ProfilePage() {
   // Load profile
   useEffect(() => {
     if (!user) return
-    pb.collection('seller_profiles')
-      .getFirstListItem(`seller="${user.id}"`)
-      .then((rec) => {
-        setProfileId(rec.id)
-        setProfile(rec as unknown as SellerProfile)
+    supabase
+      .from('seller_profiles')
+      .select('*')
+      .eq('seller', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setProfileId(data.id)
+          setProfile(data as SellerProfile)
+        } else {
+          setProfileId(null)
+          setProfile(emptyProfile())
+        }
       })
       .catch(() => {
         setProfileId(null)
@@ -169,13 +177,28 @@ export default function ProfilePage() {
         profile_status: profile.profile_status === 'yet_to_submit' ? 'in_progress' : profile.profile_status,
       }
       if (profileId) {
-        const rec = await pb.collection('seller_profiles').update(profileId, data)
-        setProfileId(rec.id)
-        setProfile(rec as unknown as SellerProfile)
+        const { data: rec, error } = await supabase
+          .from('seller_profiles')
+          .update(data)
+          .eq('id', profileId)
+          .select()
+          .single()
+        if (error) throw error
+        if (rec) {
+          setProfileId(rec.id)
+          setProfile(rec as SellerProfile)
+        }
       } else {
-        const rec = await pb.collection('seller_profiles').create(data)
-        setProfileId(rec.id)
-        setProfile(rec as unknown as SellerProfile)
+        const { data: rec, error } = await supabase
+          .from('seller_profiles')
+          .insert(data)
+          .select()
+          .single()
+        if (error) throw error
+        if (rec) {
+          setProfileId(rec.id)
+          setProfile(rec as SellerProfile)
+        }
       }
       setSaveMsg('Saved successfully')
       setTimeout(() => setSaveMsg(''), 3000)

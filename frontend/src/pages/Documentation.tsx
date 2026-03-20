@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import pb from '../lib/pocketbase'
+import { supabase } from '../lib/supabase'
 import StatusBadge from '../components/StatusBadge'
 import type { SellerDocument, BrandDoc, DocType, BrandClassification, DocStatus } from '../types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function fileUrl(collectionId: string, recordId: string, filename: string) {
-  return pb.files.getUrl({ collectionId, id: recordId } as Parameters<typeof pb.files.getUrl>[0], filename)
+function fileUrl(path: string) {
+  const { data } = supabase.storage.from('documents').getPublicUrl(path)
+  return data.publicUrl
 }
 
 // ── Upload button ─────────────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ function PrimaryDocRow({
         )}
         {doc?.file && (
           <a
-            href={fileUrl(doc.collectionId, doc.id, doc.file)}
+            href={fileUrl(doc.file)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-blue-600 hover:underline mt-0.5 inline-block"
@@ -146,7 +147,7 @@ function BrandDocRow({
               <StatusBadge status={doc.status || 'not_uploaded'} size="sm" />
               {doc.auth_file && (
                 <a
-                  href={fileUrl(doc.collectionId, doc.id, doc.auth_file)}
+                  href={fileUrl(doc.auth_file)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-blue-600 hover:underline"
@@ -194,14 +195,18 @@ export default function Documentation() {
   // Load existing docs
   useEffect(() => {
     if (!user) return
-    pb.collection('seller_documents')
-      .getFullList({ filter: `seller="${user.id}"` })
-      .then((recs) => setPrimaryDocs(recs as unknown as SellerDocument[]))
+    supabase
+      .from('seller_documents')
+      .select('*')
+      .eq('seller', user.id)
+      .then(({ data }) => setPrimaryDocs((data ?? []) as SellerDocument[]))
       .catch(() => {})
 
-    pb.collection('brand_docs')
-      .getFullList({ filter: `seller="${user.id}"` })
-      .then((recs) => setBrandDocs(recs as unknown as BrandDoc[]))
+    supabase
+      .from('brand_docs')
+      .select('*')
+      .eq('seller', user.id)
+      .then(({ data }) => setBrandDocs((data ?? []) as BrandDoc[]))
       .catch(() => {})
   }, [user])
 
@@ -209,20 +214,32 @@ export default function Documentation() {
     if (!user) return
     setUploading(docType)
     try {
-      const existing = primaryDocs.find((d) => d.doc_type === docType)
-      const formData = new FormData()
-      formData.append('seller', user.id)
-      formData.append('doc_type', docType)
-      formData.append('file', file)
-      formData.append('status', 'pending')
+      const filePath = `seller_documents/${user.id}/${docType}/${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, { upsert: true })
+      if (uploadError) throw uploadError
 
-      let rec: SellerDocument
+      const existing = primaryDocs.find((d) => d.doc_type === docType)
+      const data = { seller: user.id, doc_type: docType, file: filePath, status: 'pending' as DocStatus }
+
       if (existing) {
-        rec = await pb.collection('seller_documents').update(existing.id, formData) as unknown as SellerDocument
-        setPrimaryDocs((prev) => prev.map((d) => (d.id === existing.id ? rec : d)))
+        const { data: rec, error } = await supabase
+          .from('seller_documents')
+          .update(data)
+          .eq('id', existing.id)
+          .select()
+          .single()
+        if (error) throw error
+        setPrimaryDocs((prev) => prev.map((d) => (d.id === existing.id ? rec as SellerDocument : d)))
       } else {
-        rec = await pb.collection('seller_documents').create(formData) as unknown as SellerDocument
-        setPrimaryDocs((prev) => [...prev, rec])
+        const { data: rec, error } = await supabase
+          .from('seller_documents')
+          .insert(data)
+          .select()
+          .single()
+        if (error) throw error
+        setPrimaryDocs((prev) => [...prev, rec as SellerDocument])
       }
       showMsg('Document uploaded successfully')
     } catch {
@@ -241,7 +258,6 @@ export default function Documentation() {
       auth_file: '',
       status: 'not_uploaded',
       rejection_reason: '',
-      collectionId: '',
     }
     setBrandDocs((prev) => [...prev, local])
   }
@@ -258,11 +274,22 @@ export default function Documentation() {
         status: doc.status || 'not_uploaded',
       }
       if (isLocal) {
-        const rec = await pb.collection('brand_docs').create(data) as unknown as BrandDoc
-        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? rec : d)))
+        const { data: rec, error } = await supabase
+          .from('brand_docs')
+          .insert(data)
+          .select()
+          .single()
+        if (error) throw error
+        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? rec as BrandDoc : d)))
       } else {
-        const rec = await pb.collection('brand_docs').update(doc.id, data) as unknown as BrandDoc
-        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? rec : d)))
+        const { data: rec, error } = await supabase
+          .from('brand_docs')
+          .update(data)
+          .eq('id', doc.id)
+          .select()
+          .single()
+        if (error) throw error
+        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? rec as BrandDoc : d)))
       }
       showMsg('Brand saved')
     } catch {
@@ -278,7 +305,8 @@ export default function Documentation() {
       return
     }
     try {
-      await pb.collection('brand_docs').delete(doc.id)
+      const { error } = await supabase.from('brand_docs').delete().eq('id', doc.id)
+      if (error) throw error
       setBrandDocs((prev) => prev.filter((d) => d.id !== doc.id))
     } catch {
       showMsg('Failed to remove brand')
@@ -292,20 +320,35 @@ export default function Documentation() {
       // Save/persist the brand first if it's local
       let targetId = doc.id
       if (doc.id.startsWith('local_')) {
-        const created = await pb.collection('brand_docs').create({
-          seller: user.id,
-          brand_name: doc.brand_name,
-          classification: doc.classification,
-          status: 'not_uploaded',
-        }) as unknown as BrandDoc
-        targetId = created.id
-        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? created : d)))
+        const { data: created, error } = await supabase
+          .from('brand_docs')
+          .insert({
+            seller: user.id,
+            brand_name: doc.brand_name,
+            classification: doc.classification,
+            status: 'not_uploaded',
+          })
+          .select()
+          .single()
+        if (error) throw error
+        targetId = (created as BrandDoc).id
+        setBrandDocs((prev) => prev.map((d) => (d.id === doc.id ? created as BrandDoc : d)))
       }
-      const formData = new FormData()
-      formData.append('auth_file', file)
-      formData.append('status', 'pending')
-      const rec = await pb.collection('brand_docs').update(targetId, formData) as unknown as BrandDoc
-      setBrandDocs((prev) => prev.map((d) => (d.id === targetId ? rec : d)))
+
+      const filePath = `brand_docs/${user.id}/${targetId}/${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, { upsert: true })
+      if (uploadError) throw uploadError
+
+      const { data: rec, error } = await supabase
+        .from('brand_docs')
+        .update({ auth_file: filePath, status: 'pending' })
+        .eq('id', targetId)
+        .select()
+        .single()
+      if (error) throw error
+      setBrandDocs((prev) => prev.map((d) => (d.id === targetId ? rec as BrandDoc : d)))
       showMsg('Authorization document uploaded')
     } catch {
       showMsg('Upload failed')

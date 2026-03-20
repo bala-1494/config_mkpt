@@ -1,6 +1,30 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  Alert,
+  CircularProgress,
+  InputAdornment,
+  IconButton,
+} from '@mui/material'
+import { Email, ArrowBack, Lock, Store } from '@mui/icons-material'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#CC0000',
+      dark: '#a00000',
+      contrastText: '#fff',
+    },
+  },
+  shape: { borderRadius: 10 },
+})
 
 type Step = 'email' | 'otp'
 
@@ -37,106 +61,164 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Header */}
-        <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4"
-            style={{ backgroundColor: '#CC0000' }}
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #fff5f5 0%, #fff 50%, #f5f5ff 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 420 }}>
+          {/* Logo */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box
+              sx={{
+                width: 60,
+                height: 60,
+                borderRadius: 3,
+                bgcolor: 'primary.main',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 2,
+                boxShadow: '0 8px 20px rgba(204,0,0,0.25)',
+              }}
+            >
+              <Store sx={{ color: 'white', fontSize: 30 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="text.primary">
+              Seller Portal
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mt={0.5}>
+              Onboarding &amp; Management
+            </Typography>
+          </Box>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              borderRadius: 3,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+            }}
           >
-            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Seller Portal</h1>
-          <p className="text-sm text-gray-500 mt-1">Onboarding &amp; Management</p>
-        </div>
+            {step === 'email' ? (
+              <Box component="form" onSubmit={handleEmailSubmit}>
+                <Typography variant="h6" fontWeight={600} mb={0.5}>
+                  Sign in to your account
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={3}>
+                  Enter your email to receive a one-time passcode
+                </Typography>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          {step === 'email' ? (
-            <>
-              <h2 className="text-lg font-medium text-gray-900 mb-1">Sign in to your account</h2>
-              <p className="text-sm text-gray-500 mb-6">Enter your email to receive a one-time passcode</p>
+                <TextField
+                  fullWidth
+                  label="Email address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Email sx={{ color: 'text.secondary', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
 
-              <form onSubmit={handleEmailSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
-                    style={{ '--tw-ring-color': '#CC0000' } as React.CSSProperties}
-                    onFocus={(e) => { e.target.style.borderColor = '#CC0000'; e.target.style.boxShadow = '0 0 0 2px rgba(204,0,0,0.15)' }}
-                    onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
-                  />
-                </div>
+                {error && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                  </Alert>
+                )}
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
-
-                <button
+                <Button
                   type="submit"
-                  className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: '#CC0000' }}
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  sx={{ py: 1.5, fontWeight: 600, fontSize: '0.95rem' }}
                 >
-                  Send OTP
-                </button>
-              </form>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => { setStep('email'); setOtp(''); setError('') }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back
-              </button>
+                  Continue with Email
+                </Button>
+              </Box>
+            ) : (
+              <Box component="form" onSubmit={handleOtpSubmit}>
+                <IconButton
+                  onClick={() => { setStep('email'); setOtp(''); setError('') }}
+                  size="small"
+                  sx={{ mb: 2, color: 'text.secondary' }}
+                >
+                  <ArrowBack fontSize="small" />
+                </IconButton>
 
-              <h2 className="text-lg font-medium text-gray-900 mb-1">Check your email</h2>
-              <p className="text-sm text-gray-500 mb-1">
-                We've sent a one-time passcode to
-              </p>
-              <p className="text-sm font-medium text-gray-800 mb-6">{email}</p>
+                <Typography variant="h6" fontWeight={600} mb={0.5}>
+                  Check your email
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={0.5}>
+                  We&apos;ve sent a one-time passcode to
+                </Typography>
+                <Typography variant="body2" fontWeight={600} color="text.primary" mb={3}>
+                  {email}
+                </Typography>
 
-              <form onSubmit={handleOtpSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">One-time passcode</label>
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter OTP"
-                    maxLength={6}
-                    required
-                    autoFocus
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm tracking-widest focus:outline-none transition"
-                    onFocus={(e) => { e.target.style.borderColor = '#CC0000'; e.target.style.boxShadow = '0 0 0 2px rgba(204,0,0,0.15)' }}
-                    onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="One-time passcode"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="000000"
+                  inputProps={{ maxLength: 6 }}
+                  required
+                  autoFocus
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Lock sx={{ color: 'text.secondary', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    mb: 2,
+                    '& input': { letterSpacing: '0.35em', fontWeight: 600, fontSize: '1.1rem' },
+                  }}
+                />
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                  </Alert>
+                )}
 
-                <button
+                <Button
                   type="submit"
+                  variant="contained"
+                  fullWidth
+                  size="large"
                   disabled={loading}
-                  className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ backgroundColor: '#CC0000' }}
+                  sx={{ py: 1.5, fontWeight: 600, fontSize: '0.95rem' }}
+                  startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
                 >
                   {loading ? 'Verifying...' : 'Verify & Sign In'}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+                </Button>
+              </Box>
+            )}
+          </Paper>
+
+          <Typography variant="caption" color="text.secondary" textAlign="center" display="block" mt={3}>
+            Secure seller onboarding platform
+          </Typography>
+        </Box>
+      </Box>
+    </ThemeProvider>
   )
 }

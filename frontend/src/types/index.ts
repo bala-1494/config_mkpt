@@ -62,7 +62,6 @@ export interface SellerDocument {
   file: string
   status: DocStatus
   rejection_reason: string
-  collectionId: string
 }
 
 export interface BrandDoc {
@@ -73,7 +72,6 @@ export interface BrandDoc {
   auth_file: string
   status: DocStatus
   rejection_reason: string
-  collectionId: string
 }
 
 export interface OnboardingTask {

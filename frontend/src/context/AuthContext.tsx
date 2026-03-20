@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import pb from '../lib/pocketbase'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -18,46 +18,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore session from PocketBase store (it persists to localStorage automatically)
-    if (pb.authStore.isValid && pb.authStore.model) {
-      const model = pb.authStore.model as Record<string, string>
-      setUser({
-        id: model.id,
-        email: model.email,
-        role: model.role as 'seller' | 'approver',
-      })
-    }
-    setLoading(false)
-
-    const unsub = pb.authStore.onChange((_token, model) => {
-      if (model) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const meta = session.user.user_metadata as Record<string, string>
         setUser({
-          id: (model as Record<string, string>).id,
-          email: (model as Record<string, string>).email,
-          role: (model as Record<string, string>).role as 'seller' | 'approver',
+          id: session.user.id,
+          email: session.user.email ?? '',
+          role: (meta?.role ?? 'seller') as 'seller' | 'approver',
+        })
+      }
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const meta = session.user.user_metadata as Record<string, string>
+        setUser({
+          id: session.user.id,
+          email: session.user.email ?? '',
+          role: (meta?.role ?? 'seller') as 'seller' | 'approver',
         })
       } else {
         setUser(null)
       }
     })
-    return () => unsub()
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const login = async (email: string, otp: string) => {
     if (otp !== HARDCODED_OTP) {
       throw new Error('Invalid OTP. Please try again.')
     }
-    const authData = await pb.collection('users').authWithPassword(email, otp)
-    const model = authData.record as unknown as Record<string, string>
-    setUser({
-      id: model.id,
-      email: model.email,
-      role: model.role as 'seller' | 'approver',
-    })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: otp })
+    if (error) throw new Error(error.message)
+    if (data.user) {
+      const meta = data.user.user_metadata as Record<string, string>
+      setUser({
+        id: data.user.id,
+        email: data.user.email ?? '',
+        role: (meta?.role ?? 'seller') as 'seller' | 'approver',
+      })
+    }
   }
 
-  const logout = () => {
-    pb.authStore.clear()
+  const logout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
   }
 

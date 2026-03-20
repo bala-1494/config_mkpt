@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import pb from '../lib/pocketbase'
+import { supabase } from '../lib/supabase'
 import StatusBadge from '../components/StatusBadge'
 import type { SellerProfile, OnboardingTask, TaskStatus } from '../types'
 
@@ -108,9 +108,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    pb.collection('seller_profiles')
-      .getFirstListItem(`seller="${user.id}"`)
-      .then((rec) => setProfile(rec as unknown as SellerProfile))
+    supabase
+      .from('seller_profiles')
+      .select('*')
+      .eq('seller', user.id)
+      .single()
+      .then(({ data }) => setProfile(data as SellerProfile | null))
       .catch(() => setProfile(null))
   }, [user])
 

@@ -1,5 +1,8 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { Box, CircularProgress } from '@mui/material'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -9,15 +12,44 @@ import StripeSetup from './pages/StripeSetup'
 import Integrations from './pages/Integrations'
 import PartnerServices from './pages/PartnerServices'
 
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#CC0000',
+      dark: '#a00000',
+      contrastText: '#fff',
+    },
+    background: {
+      default: '#f8f9fa',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  shape: { borderRadius: 10 },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: { textTransform: 'none', fontWeight: 600 },
+      },
+    },
+    MuiTextField: {
+      defaultProps: { size: 'medium' },
+    },
+  },
+})
+
+function LoadingScreen() {
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <CircularProgress sx={{ color: '#CC0000' }} />
+    </Box>
+  )
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-red-600 rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
@@ -25,13 +57,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const { user, loading } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-red-600 rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
 
   return (
     <Routes>
@@ -109,11 +135,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -12,58 +11,42 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const HARDCODED_OTP = '010494'
+const MOCK_USER_KEY = 'mock_seller_user'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const meta = session.user.user_metadata as Record<string, string>
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          role: (meta?.role ?? 'seller') as 'seller' | 'approver',
-        })
+    // Restore mock user from localStorage
+    const stored = localStorage.getItem(MOCK_USER_KEY)
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored) as User)
+      } catch {
+        localStorage.removeItem(MOCK_USER_KEY)
       }
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const meta = session.user.user_metadata as Record<string, string>
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          role: (meta?.role ?? 'seller') as 'seller' | 'approver',
-        })
-      } else {
-        setUser(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    }
+    setLoading(false)
   }, [])
 
   const login = async (email: string, otp: string) => {
     if (otp !== HARDCODED_OTP) {
       throw new Error('Invalid OTP. Please try again.')
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: otp })
-    if (error) throw new Error(error.message)
-    if (data.user) {
-      const meta = data.user.user_metadata as Record<string, string>
-      setUser({
-        id: data.user.id,
-        email: data.user.email ?? '',
-        role: (meta?.role ?? 'seller') as 'seller' | 'approver',
-      })
+    // Determine role based on email domain
+    const role: 'seller' | 'approver' = email.includes('tgt.com') ? 'approver' : 'seller'
+    const mockUser: User = {
+      id: `mock-${email}`,
+      email,
+      role,
     }
+    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser))
+    setUser(mockUser)
   }
 
-  const logout = async () => {
-    await supabase.auth.signOut()
+  const logout = () => {
+    localStorage.removeItem(MOCK_USER_KEY)
     setUser(null)
   }
 

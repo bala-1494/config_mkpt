@@ -26,7 +26,6 @@ import {
   VerifiedUser,
   TaskAlt,
   HeadsetMic,
-  WarningAmber,
 } from '@mui/icons-material'
 
 // ── Types ─────────────────────────────────────────────────────────────────────

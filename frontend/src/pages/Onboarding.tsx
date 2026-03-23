@@ -225,7 +225,7 @@ export default function Onboarding() {
     if (totalMissing > 0) return
     localStorage.setItem(`onboarding_complete_${user?.id}`, 'true')
     localStorage.setItem(`onboarding_data_${user?.id}`, JSON.stringify(form))
-    navigate('/dashboard')
+    navigate('/vetting')
   }
 
   const fieldError = (val: string) => attempted && !val.trim()
@@ -638,7 +638,7 @@ export default function Onboarding() {
                 borderRadius: 2,
               }}
             >
-              Complete Evaluation
+              Proceed to Vetting
             </Button>
           </Box>
         </Box>

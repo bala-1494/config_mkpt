@@ -6,6 +6,7 @@ import { Box, CircularProgress } from '@mui/material'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
+import VettingPage from './pages/VettingPage'
 import Dashboard from './pages/Dashboard'
 import ProfilePage from './pages/profile/ProfilePage'
 import Documentation from './pages/Documentation'
@@ -72,6 +73,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Onboarding />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vetting"
+        element={
+          <ProtectedRoute>
+            <VettingPage />
           </ProtectedRoute>
         }
       />

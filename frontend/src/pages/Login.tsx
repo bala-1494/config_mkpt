@@ -9,52 +9,67 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  Dialog,
-  DialogContent,
-  IconButton,
   Divider,
 } from '@mui/material'
 import {
-  Close as CloseIcon,
   Security as SecurityIcon,
   TrendingUp as TrendingUpIcon,
   VerifiedUser as VerifiedUserIcon,
 } from '@mui/icons-material'
 
-// ── Registration form ─────────────────────────────────────────────────────────
-type RegStep = 'form' | 'otp'
+// ── Unified card: registration OR sign-in ─────────────────────────────────────
+type CardMode = 'register' | 'signin'
+type Step = 'form' | 'otp'
 
-function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
+function AuthCard({
+  mode,
+  onSwitchMode,
+}: {
+  mode: CardMode
+  onSwitchMode: (m: CardMode) => void
+}) {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [step, setStep] = useState<RegStep>('form')
+  const [step, setStep] = useState<Step>('form')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const reset = (nextMode: CardMode) => {
+    setStep('form')
+    setFullName('')
+    setEmail('')
+    setOtp('')
+    setError('')
+    onSwitchMode(nextMode)
+  }
+
   const handleGetOtp = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!email.trim() || !fullName.trim()) return
+    if (!email.trim()) return
+    if (mode === 'register' && !fullName.trim()) return
     setStep('otp')
   }
 
-  const handleCreateAccount = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       await login(email, otp)
-      navigate('/dashboard')
+      navigate(mode === 'register' ? '/onboarding' : '/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.')
     } finally {
       setLoading(false)
     }
   }
+
+  const isRegister = mode === 'register'
 
   return (
     <Paper
@@ -70,34 +85,40 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
       }}
     >
       <Typography variant="h6" fontWeight={700} mb={0.5}>
-        Create your account
+        {isRegister ? 'Create your account' : 'Sign in to your account'}
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={3}>
-        Enter your professional details to get started.
+        {isRegister
+          ? 'Enter your professional details to get started.'
+          : 'Enter your email to receive a one-time passcode.'}
       </Typography>
 
-      <Box component="form" onSubmit={step === 'form' ? handleGetOtp : handleCreateAccount}>
-        {/* Full Name */}
-        <Typography
-          variant="caption"
-          fontWeight={700}
-          color="text.secondary"
-          letterSpacing={1}
-          display="block"
-          mb={0.5}
-        >
-          FULL NAME
-        </Typography>
-        <TextField
-          fullWidth
-          placeholder="Johnathan Doe"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-          disabled={step === 'otp'}
-          inputProps={{ style: { fontSize: '0.95rem' } }}
-          sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-        />
+      <Box component="form" onSubmit={step === 'form' ? handleGetOtp : handleSubmit}>
+        {/* Full Name – registration only */}
+        {isRegister && (
+          <>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              letterSpacing={1}
+              display="block"
+              mb={0.5}
+            >
+              FULL NAME
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Johnathan Doe"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              disabled={step === 'otp'}
+              inputProps={{ style: { fontSize: '0.95rem' } }}
+              sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+          </>
+        )}
 
         {/* Email */}
         <Typography
@@ -118,6 +139,7 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={step === 'otp'}
+          autoFocus={!isRegister}
           inputProps={{ style: { fontSize: '0.95rem' } }}
           sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
@@ -158,6 +180,13 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
           </>
         ) : (
           <>
+            <Typography variant="body2" color="text.secondary" mb={0.5}>
+              We've sent a one-time passcode to
+            </Typography>
+            <Typography variant="body2" fontWeight={700} color="text.primary" mb={2}>
+              {email}
+            </Typography>
+
             <Typography
               variant="caption"
               fontWeight={700}
@@ -189,25 +218,38 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
         )}
 
         {step === 'otp' && (
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            size="large"
-            disabled={loading}
-            sx={{
-              py: 1.5,
-              mb: 1,
-              borderRadius: 2,
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              bgcolor: '#CC0000',
-              '&:hover': { bgcolor: '#a00000' },
-            }}
-            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
-          >
-            {loading ? 'Creating Account...' : 'Create Account →'}
-          </Button>
+          <>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              size="large"
+              disabled={loading}
+              sx={{
+                py: 1.5,
+                mb: 1,
+                borderRadius: 2,
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                bgcolor: '#CC0000',
+                '&:hover': { bgcolor: '#a00000' },
+              }}
+              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+            >
+              {loading
+                ? isRegister ? 'Creating Account...' : 'Signing in...'
+                : isRegister ? 'Create Account →' : 'Sign In →'}
+            </Button>
+            <Button
+              variant="text"
+              fullWidth
+              size="small"
+              onClick={() => { setStep('form'); setOtp(''); setError('') }}
+              sx={{ color: 'text.secondary', fontSize: '0.8rem', mb: 1 }}
+            >
+              ← Use a different email
+            </Button>
+          </>
         )}
 
         {step === 'form' && (
@@ -226,7 +268,7 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
               '&:hover': { bgcolor: '#a00000' },
             }}
           >
-            Create Account →
+            {isRegister ? 'Create Account →' : 'Sign In →'}
           </Button>
         )}
 
@@ -244,211 +286,38 @@ function RegistrationCard({ onSignInClick }: { onSignInClick: () => void }) {
         <Divider sx={{ mb: 2 }} />
 
         <Typography variant="body2" textAlign="center" color="text.secondary">
-          Already have an account?{' '}
-          <Box
-            component="span"
-            onClick={onSignInClick}
-            sx={{
-              color: '#CC0000',
-              fontWeight: 600,
-              cursor: 'pointer',
-              '&:hover': { textDecoration: 'underline' },
-            }}
-          >
-            Sign In
-          </Box>
+          {isRegister ? (
+            <>
+              Already have an account?{' '}
+              <Box
+                component="span"
+                onClick={() => reset('signin')}
+                sx={{ color: '#CC0000', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+              >
+                Sign In
+              </Box>
+            </>
+          ) : (
+            <>
+              Don't have an account?{' '}
+              <Box
+                component="span"
+                onClick={() => reset('register')}
+                sx={{ color: '#CC0000', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+              >
+                Create one
+              </Box>
+            </>
+          )}
         </Typography>
       </Box>
     </Paper>
   )
 }
 
-// ── Sign In modal ─────────────────────────────────────────────────────────────
-type SignInStep = 'email' | 'otp'
-
-function SignInModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { login } = useAuth()
-  const navigate = useNavigate()
-
-  const [step, setStep] = useState<SignInStep>('email')
-  const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleClose = () => {
-    setStep('email')
-    setEmail('')
-    setOtp('')
-    setError('')
-    onClose()
-  }
-
-  const handleGetOtp = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (!email.trim()) return
-    setStep('otp')
-  }
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await login(email, otp)
-      navigate('/dashboard')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
-    >
-      <DialogContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" fontWeight={700}>
-            Sign in to your account
-          </Typography>
-          <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary' }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        {step === 'email' ? (
-          <Box component="form" onSubmit={handleGetOtp}>
-            <Typography variant="body2" color="text.secondary" mb={2.5}>
-              Enter your email to receive a one-time passcode.
-            </Typography>
-
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color="text.secondary"
-              letterSpacing={1}
-              display="block"
-              mb={0.5}
-            >
-              EMAIL
-            </Typography>
-            <TextField
-              fullWidth
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoFocus
-              inputProps={{ style: { fontSize: '0.95rem' } }}
-              sx={{ mb: 2.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
-
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                bgcolor: '#CC0000',
-                '&:hover': { bgcolor: '#a00000' },
-              }}
-            >
-              Get OTP
-            </Button>
-          </Box>
-        ) : (
-          <Box component="form" onSubmit={handleSignIn}>
-            <Typography variant="body2" color="text.secondary" mb={0.5}>
-              We've sent a one-time passcode to
-            </Typography>
-            <Typography variant="body2" fontWeight={700} color="text.primary" mb={2.5}>
-              {email}
-            </Typography>
-
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color="text.secondary"
-              letterSpacing={1}
-              display="block"
-              mb={0.5}
-            >
-              ONE-TIME PASSCODE
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="000000"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-              autoFocus
-              inputProps={{ maxLength: 6, style: { letterSpacing: '0.4em', fontWeight: 700, fontSize: '1.1rem' } }}
-              sx={{ mb: 2.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
-
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={loading}
-              sx={{
-                py: 1.5,
-                mb: 1.5,
-                borderRadius: 2,
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                bgcolor: '#CC0000',
-                '&:hover': { bgcolor: '#a00000' },
-              }}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
-            >
-              {loading ? 'Signing in...' : 'Sign In →'}
-            </Button>
-
-            <Button
-              variant="text"
-              fullWidth
-              size="small"
-              onClick={() => { setStep('email'); setOtp(''); setError('') }}
-              sx={{ color: 'text.secondary', fontSize: '0.8rem' }}
-            >
-              ← Use a different email
-            </Button>
-          </Box>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Login() {
-  const [signInOpen, setSignInOpen] = useState(false)
+  const [cardMode, setCardMode] = useState<CardMode>('register')
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f7f7fa' }}>
@@ -489,7 +358,7 @@ export default function Login() {
         <Button
           variant="outlined"
           size="small"
-          onClick={() => setSignInOpen(true)}
+          onClick={() => setCardMode('signin')}
           sx={{
             borderColor: 'grey.300',
             color: 'text.primary',
@@ -611,9 +480,9 @@ export default function Login() {
             </Box>
           </Box>
 
-          {/* Right column – registration card */}
+          {/* Right column – auth card */}
           <Box sx={{ width: '100%', maxWidth: 420 }}>
-            <RegistrationCard onSignInClick={() => setSignInOpen(true)} />
+            <AuthCard mode={cardMode} onSwitchMode={setCardMode} />
           </Box>
         </Box>
       </Box>
@@ -663,9 +532,6 @@ export default function Login() {
           <SecurityIcon sx={{ color: '#fff', fontSize: 16 }} />
         </Box>
       </Box>
-
-      {/* Sign In modal */}
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </Box>
   )
 }

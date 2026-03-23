@@ -17,6 +17,7 @@ import {
   InputAdornment,
   Snackbar,
   Alert,
+  IconButton,
 } from '@mui/material'
 import {
   InfoOutlined,
@@ -27,8 +28,8 @@ import {
   Security as SecurityIcon,
   VerifiedUser,
   ArticleOutlined,
-  WarningAmber,
   HeadsetMic,
+  Close,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
 
@@ -186,6 +187,7 @@ export default function Onboarding() {
   const [attempted, setAttempted] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [chatOpen, setChatOpen] = useState(true)
 
   const identityRef = useRef<HTMLDivElement>(null)
   const leadershipRef = useRef<HTMLDivElement>(null)
@@ -645,6 +647,7 @@ export default function Onboarding() {
       </Box>
 
       {/* ── Floating support chat ─────────────────────────────── */}
+      {chatOpen && (
       <Paper
         elevation={4}
         sx={{
@@ -672,7 +675,7 @@ export default function Onboarding() {
           >
             <HeadsetMic sx={{ color: '#fff', fontSize: 18 }} />
           </Box>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={700}>
               Need assistance?
             </Typography>
@@ -680,6 +683,14 @@ export default function Onboarding() {
               Concierge v3.4 is online
             </Typography>
           </Box>
+          <IconButton
+            size="small"
+            onClick={() => setChatOpen(false)}
+            sx={{ mt: -0.5, mr: -0.5, color: 'text.secondary' }}
+            aria-label="Close chat"
+          >
+            <Close fontSize="small" />
+          </IconButton>
         </Box>
         <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
           Vetting typically takes 3–5 business days. Ensure your leadership documents are current.
@@ -699,6 +710,7 @@ export default function Onboarding() {
           Open Support Chat
         </Button>
       </Paper>
+      )}
 
       {/* Draft saved snackbar */}
       <Snackbar

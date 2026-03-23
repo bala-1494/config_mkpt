@@ -61,7 +61,7 @@ function AuthCard({
     setLoading(true)
     try {
       await login(email, otp)
-      navigate('/dashboard')
+      navigate(mode === 'register' ? '/onboarding' : '/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.')
     } finally {

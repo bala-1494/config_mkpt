@@ -18,6 +18,9 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  Avatar,
+  Badge,
+  Tooltip,
 } from '@mui/material'
 import {
   InfoOutlined,
@@ -29,12 +32,13 @@ import {
   VerifiedUser,
   ArticleOutlined,
   HeadsetMic,
-  Close,
   WarningAmber,
   Instagram,
   LinkedIn,
   Twitter,
   CheckCircle,
+  HelpOutline,
+  NotificationsNone,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
 
@@ -196,7 +200,6 @@ export default function Onboarding() {
   const [attempted, setAttempted] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [draftSaved, setDraftSaved] = useState(false)
-  const [chatOpen, setChatOpen] = useState(true)
   const [securityScore, setSecurityScore] = useState(0)
   const [socialImports, setSocialImports] = useState<Record<string, boolean>>({
     instagram: false,
@@ -305,10 +308,89 @@ export default function Onboarding() {
             locked
           />
         </Box>
+
+        {/* Support – pinned at sidebar bottom */}
+        <Box sx={{ px: 1.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 1.5,
+              py: 1.25,
+              bgcolor: 'rgba(26,26,46,0.04)',
+              borderRadius: 2,
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'rgba(26,26,46,0.08)' },
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                bgcolor: '#1a1a2e',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <HeadsetMic sx={{ color: '#fff', fontSize: 15 }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.8rem', lineHeight: 1.2 }}>
+                Support
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                We're online
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Box>
 
       {/* ── Main content ──────────────────────────────────────── */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+        {/* Panel header */}
+        <Box
+          sx={{
+            px: { xs: 3, md: 4 },
+            py: 1.25,
+            bgcolor: '#fff',
+            borderBottom: '1px solid',
+            borderColor: 'grey.100',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 0.5,
+            flexShrink: 0,
+            zIndex: 20,
+          }}
+        >
+          <Tooltip title="Help">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <HelpOutline sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Notifications">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <Badge badgeContent={2} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
+                <NotificationsNone sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={user?.name ?? 'Profile'}>
+            <Avatar
+              sx={{ width: 30, height: 30, bgcolor: '#1a1a2e', fontSize: 13, cursor: 'pointer', ml: 0.75 }}
+            >
+              {user?.name?.[0]?.toUpperCase() ?? 'U'}
+            </Avatar>
+          </Tooltip>
+        </Box>
+
         {/* Scrollable area */}
         <Box sx={{ flex: 1, overflowY: 'auto', pb: 12 }}>
           {/* Page header */}
@@ -732,72 +814,6 @@ export default function Onboarding() {
           </Box>
         </Box>
       </Box>
-
-      {/* ── Floating support chat ─────────────────────────────── */}
-      {chatOpen && (
-      <Paper
-        elevation={4}
-        sx={{
-          position: 'fixed',
-          bottom: 80,
-          right: 24,
-          width: 288,
-          p: 2.5,
-          borderRadius: 3,
-          zIndex: 200,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              bgcolor: '#1a1a2e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <HeadsetMic sx={{ color: '#fff', fontSize: 18 }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" fontWeight={700}>
-              Need assistance?
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Concierge v3.4 is online
-            </Typography>
-          </Box>
-          <IconButton
-            size="small"
-            onClick={() => setChatOpen(false)}
-            sx={{ mt: -0.5, mr: -0.5, color: 'text.secondary' }}
-            aria-label="Close chat"
-          >
-            <Close fontSize="small" />
-          </IconButton>
-        </Box>
-        <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-          Vetting typically takes 3–5 business days. Ensure your leadership documents are current.
-        </Typography>
-        <Button
-          fullWidth
-          variant="contained"
-          size="small"
-          sx={{
-            bgcolor: '#1a1a2e',
-            '&:hover': { bgcolor: '#2d2d4e' },
-            fontWeight: 600,
-            borderRadius: 2,
-            py: 1,
-          }}
-        >
-          Open Support Chat
-        </Button>
-      </Paper>
-      )}
 
       {/* Draft saved snackbar */}
       <Snackbar

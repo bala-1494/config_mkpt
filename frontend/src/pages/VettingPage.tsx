@@ -26,7 +26,6 @@ import {
   VerifiedUser,
   TaskAlt,
   HeadsetMic,
-  WarningAmber,
 } from '@mui/icons-material'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -53,7 +52,7 @@ const BSA_SECTIONS = [
     bullets: [
       'Providers must maintain active licensing where required by law.',
       'Marketplace portal reserves the right to audit service quality at any time.',
-      'Transactions must be processed through the platform's proprietary escrow system.',
+      'Transactions must be processed through the platform\u2019s proprietary escrow system.',
     ],
   },
   {

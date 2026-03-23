@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -30,6 +30,11 @@ import {
   ArticleOutlined,
   HeadsetMic,
   Close,
+  WarningAmber,
+  Instagram,
+  LinkedIn,
+  Twitter,
+  CheckCircle,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
 
@@ -44,13 +49,17 @@ interface FormData {
   websiteUrl: string
 }
 
-const INDUSTRIES = [
-  'Technology & Software',
-  'Retail & Consumer Goods',
-  'Financial Services',
-  'Healthcare',
-  'Manufacturing',
-  'Media & Entertainment',
+const CATEGORIES = [
+  'Beauty & Personal Care',
+  'Fashion & Apparel',
+  'Electronics & Hardware',
+  'Home & Living',
+  'Food & Grocery',
+  'Sports & Outdoors',
+  'Health & Wellness',
+  'Toys & Games',
+  'Automotive',
+  'Books & Media',
 ]
 
 const ORG_STRUCTURES = [
@@ -177,7 +186,7 @@ export default function Onboarding() {
   const [form, setForm] = useState<FormData>({
     legalBusinessName: '',
     taxId: '',
-    industryFocus: 'Technology & Software',
+    industryFocus: 'Beauty & Personal Care',
     leadExecutiveName: '',
     designation: '',
     orgStructure: 'partnership',
@@ -188,6 +197,12 @@ export default function Onboarding() {
   const [activeTab, setActiveTab] = useState(0)
   const [draftSaved, setDraftSaved] = useState(false)
   const [chatOpen, setChatOpen] = useState(true)
+  const [securityScore, setSecurityScore] = useState(0)
+  const [socialImports, setSocialImports] = useState<Record<string, boolean>>({
+    instagram: false,
+    linkedin: false,
+    twitter: false,
+  })
 
   const identityRef = useRef<HTMLDivElement>(null)
   const leadershipRef = useRef<HTMLDivElement>(null)
@@ -198,6 +213,30 @@ export default function Onboarding() {
 
   const setSelect = (field: keyof FormData) => (e: SelectChangeEvent) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+
+  // Animate security score to 85 when URL is entered
+  useEffect(() => {
+    if (!form.websiteUrl.trim()) {
+      setSecurityScore(0)
+      return
+    }
+    setSecurityScore(0)
+    const TARGET = 85
+    const DURATION = 1200
+    const STEPS = 60
+    const interval = DURATION / STEPS
+    let current = 0
+    const timer = setInterval(() => {
+      current += TARGET / STEPS
+      if (current >= TARGET) {
+        setSecurityScore(TARGET)
+        clearInterval(timer)
+      } else {
+        setSecurityScore(Math.round(current))
+      }
+    }, interval)
+    return () => clearInterval(timer)
+  }, [form.websiteUrl])
 
   // Required fields per section
   const missingIdentity = [form.legalBusinessName, form.taxId].filter((v) => !v.trim()).length
@@ -366,7 +405,7 @@ export default function Onboarding() {
 
               <Box>
                 <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                  Primary Industry Focus
+                  Primary Category Focus
                 </Typography>
                 <FormControl fullWidth>
                   <Select
@@ -374,9 +413,9 @@ export default function Onboarding() {
                     onChange={setSelect('industryFocus')}
                     sx={{ borderRadius: 2 }}
                   >
-                    {INDUSTRIES.map((ind) => (
-                      <MenuItem key={ind} value={ind}>
-                        {ind}
+                    {CATEGORIES.map((cat) => (
+                      <MenuItem key={cat} value={cat}>
+                        {cat}
                       </MenuItem>
                     ))}
                   </Select>
@@ -513,7 +552,7 @@ export default function Onboarding() {
                   elevation={0}
                   sx={{
                     flex: 1,
-                    minWidth: 200,
+                    minWidth: 220,
                     p: 2.5,
                     border: '1px solid',
                     borderColor: 'grey.200',
@@ -527,20 +566,48 @@ export default function Onboarding() {
                     </Typography>
                   </Box>
                   <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-                    Verification of active LinkedIn &amp; Twitter profiles.
+                    Import your social profiles for verification.
                   </Typography>
-                  <Chip
-                    label="LINKED VERIFIED"
-                    size="small"
-                    sx={{
-                      bgcolor: '#e8f5e9',
-                      color: '#2e7d32',
-                      fontWeight: 700,
-                      fontSize: '0.65rem',
-                      letterSpacing: 0.5,
-                      height: 22,
-                    }}
-                  />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {[
+                      { key: 'instagram', label: 'Instagram', icon: <Instagram sx={{ fontSize: 16 }} />, color: '#E1306C' },
+                      { key: 'linkedin', label: 'LinkedIn', icon: <LinkedIn sx={{ fontSize: 16 }} />, color: '#0077B5' },
+                      { key: 'twitter', label: 'Twitter / X', icon: <Twitter sx={{ fontSize: 16 }} />, color: '#1DA1F2' },
+                    ].map(({ key, label, icon, color }) =>
+                      socialImports[key] ? (
+                        <Box
+                          key={key}
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}
+                        >
+                          <CheckCircle sx={{ fontSize: 16, color: '#2e7d32' }} />
+                          <Typography variant="caption" fontWeight={600} color="#2e7d32">
+                            {label} imported for verification
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Button
+                          key={key}
+                          size="small"
+                          variant="outlined"
+                          startIcon={icon}
+                          onClick={() => setSocialImports((prev) => ({ ...prev, [key]: true }))}
+                          sx={{
+                            justifyContent: 'flex-start',
+                            borderColor: color,
+                            color: color,
+                            borderRadius: 2,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            py: 0.5,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: `${color}10`, borderColor: color },
+                          }}
+                        >
+                          Import {label}
+                        </Button>
+                      )
+                    )}
+                  </Box>
                 </Paper>
 
                 {/* Security Rating */}
@@ -564,19 +631,39 @@ export default function Onboarding() {
                   <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
                     SSL &amp; Domain authority score assessment.
                   </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={78}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: 'grey.200',
-                      '& .MuiLinearProgress-bar': { bgcolor: '#3366cc', borderRadius: 3 },
-                    }}
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
-                    Score: 78/100
-                  </Typography>
+                  {form.websiteUrl.trim() ? (
+                    <>
+                      <LinearProgress
+                        variant="determinate"
+                        value={securityScore}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: 'grey.200',
+                          transition: 'none',
+                          '& .MuiLinearProgress-bar': {
+                            bgcolor: securityScore >= 80 ? '#2e7d32' : '#3366cc',
+                            borderRadius: 3,
+                            transition: 'transform 0.02s linear',
+                          },
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 0.75 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Score: {securityScore}/100
+                        </Typography>
+                        {securityScore === 85 && (
+                          <Typography variant="caption" fontWeight={700} color="#2e7d32">
+                            Good
+                          </Typography>
+                        )}
+                      </Box>
+                    </>
+                  ) : (
+                    <Typography variant="caption" color="text.disabled" display="block">
+                      Enter a URL above to scan
+                    </Typography>
+                  )}
                 </Paper>
               </Box>
             </SectionCard>

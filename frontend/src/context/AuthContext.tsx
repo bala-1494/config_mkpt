@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -11,42 +12,76 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const HARDCODED_OTP = '010494'
-const MOCK_USER_KEY = 'mock_seller_user'
+
+function mapSupabaseUser(supaUser: { id: string; email?: string; user_metadata?: Record<string, string> }): User {
+  const role: 'seller' | 'approver' = supaUser.email?.includes('tgt.com') ? 'approver' : 'seller'
+  return {
+    id: supaUser.id,
+    email: supaUser.email ?? '',
+    role,
+    name: supaUser.user_metadata?.full_name,
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore mock user from localStorage
-    const stored = localStorage.getItem(MOCK_USER_KEY)
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored) as User)
-      } catch {
-        localStorage.removeItem(MOCK_USER_KEY)
+    // Restore session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user))
       }
-    }
-    setLoading(false)
+      setLoading(false)
+    })
+
+    // Keep user in sync with Supabase auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user))
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const login = async (email: string, otp: string) => {
     if (otp !== HARDCODED_OTP) {
       throw new Error('Invalid OTP. Please try again.')
     }
-    // Determine role based on email domain
-    const role: 'seller' | 'approver' = email.includes('tgt.com') ? 'approver' : 'seller'
-    const mockUser: User = {
-      id: `mock-${email}`,
+
+    // Try signing in with email + hardcoded OTP as password
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      role,
+      password: HARDCODED_OTP,
+    })
+
+    if (!signInError) return
+
+    // User doesn't exist yet — create the account (sign-up)
+    if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: HARDCODED_OTP,
+      })
+      if (signUpError) throw signUpError
+
+      // Sign in after account creation
+      const { error: retryError } = await supabase.auth.signInWithPassword({
+        email,
+        password: HARDCODED_OTP,
+      })
+      if (retryError) throw retryError
+    } else {
+      throw signInError
     }
-    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser))
-    setUser(mockUser)
   }
 
-  const logout = () => {
-    localStorage.removeItem(MOCK_USER_KEY)
+  const logout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
   }
 

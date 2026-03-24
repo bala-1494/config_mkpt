@@ -67,16 +67,21 @@ function AuthCard({
         return
       }
       // Returning sign-in: redirect to where user left off
-      const userId = `mock-${email}`
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+      if (!userId) {
+        navigate('/onboarding')
+        return
+      }
       const { data } = await supabase
         .from('seller_profiles')
         .select('journey_step')
         .eq('seller', userId)
         .maybeSingle()
-      const step = data?.journey_step
-      if (step === 'complete') {
+      const journeyStep = data?.journey_step
+      if (journeyStep === 'complete') {
         navigate('/dashboard')
-      } else if (step === 'vetting' || step === 'bsa') {
+      } else if (journeyStep === 'vetting' || journeyStep === 'bsa') {
         navigate('/vetting')
       } else {
         navigate('/onboarding')

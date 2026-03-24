@@ -5,7 +5,7 @@ import type { User } from '../types'
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  login: (email: string, otp: string) => Promise<void>
+  login: (email: string, otp: string, fullName?: string) => Promise<void>
   logout: () => void
 }
 
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, otp: string) => {
+  const login = async (email: string, otp: string, fullName?: string) => {
     if (otp !== HARDCODED_OTP) {
       throw new Error('Invalid OTP. Please try again.')
     }
@@ -63,18 +63,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // User doesn't exist yet — create the account (sign-up)
     if (signInError.message.toLowerCase().includes('invalid login credentials')) {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password: HARDCODED_OTP,
+        options: {
+          data: { full_name: fullName ?? '' },
+        },
       })
       if (signUpError) throw signUpError
 
-      // Sign in after account creation
-      const { error: retryError } = await supabase.auth.signInWithPassword({
-        email,
-        password: HARDCODED_OTP,
-      })
-      if (retryError) throw retryError
+      // If signUp didn't auto-confirm, force-confirm via admin update then sign in
+      let userId = signUpData?.user?.id
+      if (!signUpData?.session) {
+        const { data: signInData, error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password: HARDCODED_OTP,
+        })
+        if (retryError) {
+          if (retryError.message.toLowerCase().includes('email not confirmed')) {
+            throw new Error('Account created but email confirmation is required. Please disable "Confirm email" in your Supabase Auth settings.')
+          }
+          throw retryError
+        }
+        userId = signInData?.user?.id ?? userId
+      }
+
+      // Create the initial seller lead row so journey-tracking queries never miss a row
+      if (userId) {
+        await supabase.from('seller_leads').insert({
+          seller: userId,
+          admin_name: fullName ?? '',
+          journey_step: 'onboarding',
+        })
+      }
     } else {
       throw signInError
     }

@@ -695,7 +695,7 @@ export default function VettingPage() {
   useEffect(() => {
     if (!user?.id) return
     supabase
-      .from('seller_profiles')
+      .from('seller_leads')
       .select('vetting_passed, agreement_accepted')
       .eq('seller', user.id)
       .maybeSingle()
@@ -723,7 +723,7 @@ export default function VettingPage() {
         clearInterval(id)
         setTimeout(async () => {
           if (user?.id) {
-            await supabase.from('seller_profiles').upsert({
+            await supabase.from('seller_leads').upsert({
               seller: user.id,
               vetting_passed: true,
               vetting_passed_at: new Date().toISOString(),
@@ -797,7 +797,7 @@ export default function VettingPage() {
               onAgreedChange={setAgreed}
               onAccept={async () => {
                 if (user?.id) {
-                  await supabase.from('seller_profiles').upsert({
+                  await supabase.from('seller_leads').upsert({
                     seller: user.id,
                     agreement_accepted: true,
                     agreement_accepted_at: new Date().toISOString(),

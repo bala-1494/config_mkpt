@@ -215,8 +215,8 @@ export default function Onboarding() {
   useEffect(() => {
     if (!user?.id) return
     supabase
-      .from('seller_profiles')
-      .select('business_name, ein, onboarding_industry, admin_name, onboarding_designation, business_type, website')
+      .from('seller_leads')
+      .select('business_name, ein, industry, admin_name, designation, business_type, website')
       .eq('seller', user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -225,9 +225,9 @@ export default function Onboarding() {
           ...prev,
           legalBusinessName: data.business_name ?? prev.legalBusinessName,
           taxId: data.ein ?? prev.taxId,
-          industryFocus: data.onboarding_industry ?? prev.industryFocus,
+          industryFocus: data.industry ?? prev.industryFocus,
           leadExecutiveName: data.admin_name ?? prev.leadExecutiveName,
-          designation: data.onboarding_designation ?? prev.designation,
+          designation: data.designation ?? prev.designation,
           orgStructure: data.business_type ?? prev.orgStructure,
           websiteUrl: data.website ?? prev.websiteUrl,
         }))
@@ -284,13 +284,13 @@ export default function Onboarding() {
 
   const handleSaveDraft = async () => {
     if (!user?.id) return
-    await supabase.from('seller_profiles').upsert({
+    await supabase.from('seller_leads').upsert({
       seller: user.id,
       business_name: form.legalBusinessName,
       ein: form.taxId,
-      onboarding_industry: form.industryFocus,
+      industry: form.industryFocus,
       admin_name: form.leadExecutiveName,
-      onboarding_designation: form.designation,
+      designation: form.designation,
       business_type: form.orgStructure,
       website: form.websiteUrl,
       journey_step: 'onboarding',
@@ -302,13 +302,13 @@ export default function Onboarding() {
     setAttempted(true)
     if (totalMissing > 0) return
     if (!user?.id) return
-    await supabase.from('seller_profiles').upsert({
+    await supabase.from('seller_leads').upsert({
       seller: user.id,
       business_name: form.legalBusinessName,
       ein: form.taxId,
-      onboarding_industry: form.industryFocus,
+      industry: form.industryFocus,
       admin_name: form.leadExecutiveName,
-      onboarding_designation: form.designation,
+      designation: form.designation,
       business_type: form.orgStructure,
       website: form.websiteUrl,
       journey_step: 'vetting',

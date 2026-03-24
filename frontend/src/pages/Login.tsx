@@ -61,7 +61,7 @@ function AuthCard({
     setError('')
     setLoading(true)
     try {
-      await login(email, otp)
+      await login(email, otp, isRegister ? fullName : undefined)
       if (mode === 'register') {
         navigate('/onboarding')
         return
@@ -74,7 +74,7 @@ function AuthCard({
         return
       }
       const { data } = await supabase
-        .from('seller_profiles')
+        .from('seller_leads')
         .select('journey_step')
         .eq('seller', userId)
         .maybeSingle()

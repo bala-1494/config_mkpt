@@ -5,7 +5,7 @@ import type { User } from '../types'
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  login: (email: string, otp: string) => Promise<void>
+  login: (email: string, otp: string, fullName?: string) => Promise<void>
   logout: () => void
 }
 
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, otp: string) => {
+  const login = async (email: string, otp: string, fullName?: string) => {
     if (otp !== HARDCODED_OTP) {
       throw new Error('Invalid OTP. Please try again.')
     }
@@ -63,18 +63,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // User doesn't exist yet — create the account (sign-up)
     if (signInError.message.toLowerCase().includes('invalid login credentials')) {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password: HARDCODED_OTP,
+        options: {
+          data: { full_name: fullName ?? '' },
+        },
       })
       if (signUpError) throw signUpError
 
       // Sign in after account creation
-      const { error: retryError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: retryError } = await supabase.auth.signInWithPassword({
         email,
         password: HARDCODED_OTP,
       })
       if (retryError) throw retryError
+
+      // Create the initial seller profile row so all pages can query it safely
+      const userId = signInData?.user?.id ?? signUpData?.user?.id
+      if (userId) {
+        await supabase.from('seller_profiles').insert({
+          seller: userId,
+          admin_name: fullName ?? '',
+          journey_step: 'onboarding',
+        })
+      }
     } else {
       throw signInError
     }

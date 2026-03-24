@@ -61,7 +61,7 @@ function AuthCard({
     setError('')
     setLoading(true)
     try {
-      await login(email, otp)
+      await login(email, otp, isRegister ? fullName : undefined)
       if (mode === 'register') {
         navigate('/onboarding')
         return

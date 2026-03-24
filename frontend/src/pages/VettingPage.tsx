@@ -14,6 +14,10 @@ import {
   Divider,
   Snackbar,
   Alert,
+  IconButton,
+  Avatar,
+  Badge,
+  Tooltip,
 } from '@mui/material'
 import {
   CheckCircle,
@@ -28,6 +32,8 @@ import {
   VerifiedUser,
   TaskAlt,
   HeadsetMic,
+  HelpOutline,
+  NotificationsNone,
 } from '@mui/icons-material'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -173,6 +179,47 @@ function Sidebar({ phase }: { phase: Phase }) {
             </Box>
           )
         })}
+      </Box>
+
+      {/* Support – pinned at sidebar bottom */}
+      <Box sx={{ px: 1.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            px: 1.5,
+            py: 1.25,
+            bgcolor: 'rgba(26,26,46,0.04)',
+            borderRadius: 2,
+            cursor: 'pointer',
+            '&:hover': { bgcolor: 'rgba(26,26,46,0.08)' },
+            transition: 'background 0.15s ease',
+          }}
+        >
+          <Box
+            sx={{
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              bgcolor: '#1a1a2e',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <HeadsetMic sx={{ color: '#fff', fontSize: 15 }} />
+          </Box>
+          <Box>
+            <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.8rem', lineHeight: 1.2 }}>
+              Support
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+              We're online
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   )
@@ -696,47 +743,51 @@ export default function VettingPage() {
     progress >= 100 ? 3 : progress >= (200 / 3) ? 2 : progress >= (100 / 3) ? 1 : 0
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f5f5f7' }}>
-      {/* ── Top nav ── */}
-      <Box
-        component="nav"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: { xs: 3, md: 5 },
-          py: 2,
-          bgcolor: '#fff',
-          borderBottom: '1px solid',
-          borderColor: 'grey.100',
-        }}
-      >
-        <Typography variant="h6" fontWeight={800} sx={{ color: '#CC0000', letterSpacing: '-0.5px' }}>
-          Marketplace portal
-        </Typography>
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
-          {['Process', 'Support', 'FAQ'].map((item) => (
-            <Typography
-              key={item}
-              variant="body2"
-              sx={{ cursor: 'pointer', color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-            >
-              {item}
-            </Typography>
-          ))}
-        </Box>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{ bgcolor: '#CC0000', '&:hover': { bgcolor: '#a00000' }, fontWeight: 600, borderRadius: 2, px: 2.5 }}
-        >
-          Sign In
-        </Button>
-      </Box>
+    <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: '#f5f5f7' }}>
+      {/* ── Sidebar ── */}
+      <Sidebar phase={phase} />
 
-      {/* ── Body ── */}
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <Sidebar phase={phase} />
+      {/* ── Right panel ── */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+        {/* Panel header */}
+        <Box
+          sx={{
+            px: { xs: 3, md: 4 },
+            py: 1.25,
+            bgcolor: '#fff',
+            borderBottom: '1px solid',
+            borderColor: 'grey.100',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 0.5,
+            flexShrink: 0,
+            zIndex: 20,
+          }}
+        >
+          <Tooltip title="Help">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <HelpOutline sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Notifications">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <Badge badgeContent={2} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
+                <NotificationsNone sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={user?.name ?? 'Profile'}>
+            <Avatar
+              sx={{ width: 30, height: 30, bgcolor: '#1a1a2e', fontSize: 13, cursor: 'pointer', ml: 0.75 }}
+            >
+              {user?.name?.[0]?.toUpperCase() ?? 'U'}
+            </Avatar>
+          </Tooltip>
+        </Box>
+
+        {/* Scrollable content */}
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
           {phase === 'vetting' ? (
             <VettingContent progress={progress} approvedCount={approvedCount} />
@@ -758,34 +809,6 @@ export default function VettingPage() {
               onDownload={() => setSnackbar(true)}
             />
           )}
-        </Box>
-      </Box>
-
-      {/* ── Footer ── */}
-      <Box
-        component="footer"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: { xs: 3, md: 5 },
-          py: 2,
-          borderTop: '1px solid',
-          borderColor: 'grey.200',
-          bgcolor: '#fff',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Typography variant="caption" color="text.secondary">
-          © 2024 MARKETPLACE PORTAL. EDITORIAL EXCELLENCE.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 3 }}>
-          {['TERMS OF SERVICE', 'PRIVACY POLICY', 'CONTACT SUPPORT'].map((item) => (
-            <Typography key={item} variant="caption" color="text.secondary" sx={{ cursor: 'pointer', '&:hover': { color: 'text.primary' } }}>
-              {item}
-            </Typography>
-          ))}
         </Box>
       </Box>
 

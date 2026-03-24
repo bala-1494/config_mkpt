@@ -13,10 +13,13 @@ import {
   ToggleButtonGroup,
   Button,
   LinearProgress,
-  Chip,
   InputAdornment,
   Snackbar,
   Alert,
+  IconButton,
+  Avatar,
+  Badge,
+  Tooltip,
 } from '@mui/material'
 import {
   InfoOutlined,
@@ -27,8 +30,14 @@ import {
   Security as SecurityIcon,
   VerifiedUser,
   ArticleOutlined,
-  WarningAmber,
   HeadsetMic,
+  WarningAmber,
+  Instagram,
+  LinkedIn,
+  Twitter,
+  CheckCircle,
+  HelpOutline,
+  NotificationsNone,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
 import { supabase } from '../lib/supabase'
@@ -44,13 +53,17 @@ interface FormData {
   websiteUrl: string
 }
 
-const INDUSTRIES = [
-  'Technology & Software',
-  'Retail & Consumer Goods',
-  'Financial Services',
-  'Healthcare',
-  'Manufacturing',
-  'Media & Entertainment',
+const CATEGORIES = [
+  'Beauty & Personal Care',
+  'Fashion & Apparel',
+  'Electronics & Hardware',
+  'Home & Living',
+  'Food & Grocery',
+  'Sports & Outdoors',
+  'Health & Wellness',
+  'Toys & Games',
+  'Automotive',
+  'Books & Media',
 ]
 
 const ORG_STRUCTURES = [
@@ -177,7 +190,7 @@ export default function Onboarding() {
   const [form, setForm] = useState<FormData>({
     legalBusinessName: '',
     taxId: '',
-    industryFocus: 'Technology & Software',
+    industryFocus: 'Beauty & Personal Care',
     leadExecutiveName: '',
     designation: '',
     orgStructure: 'partnership',
@@ -187,6 +200,12 @@ export default function Onboarding() {
   const [attempted, setAttempted] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [securityScore, setSecurityScore] = useState(0)
+  const [socialImports, setSocialImports] = useState<Record<string, boolean>>({
+    instagram: false,
+    linkedin: false,
+    twitter: false,
+  })
 
   const identityRef = useRef<HTMLDivElement>(null)
   const leadershipRef = useRef<HTMLDivElement>(null)
@@ -220,6 +239,30 @@ export default function Onboarding() {
 
   const setSelect = (field: keyof FormData) => (e: SelectChangeEvent) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+
+  // Animate security score to 85 when URL is entered
+  useEffect(() => {
+    if (!form.websiteUrl.trim()) {
+      setSecurityScore(0)
+      return
+    }
+    setSecurityScore(0)
+    const TARGET = 85
+    const DURATION = 1200
+    const STEPS = 60
+    const interval = DURATION / STEPS
+    let current = 0
+    const timer = setInterval(() => {
+      current += TARGET / STEPS
+      if (current >= TARGET) {
+        setSecurityScore(TARGET)
+        clearInterval(timer)
+      } else {
+        setSecurityScore(Math.round(current))
+      }
+    }, interval)
+    return () => clearInterval(timer)
+  }, [form.websiteUrl])
 
   // Required fields per section
   const missingIdentity = [form.legalBusinessName, form.taxId].filter((v) => !v.trim()).length
@@ -309,10 +352,89 @@ export default function Onboarding() {
             locked
           />
         </Box>
+
+        {/* Support – pinned at sidebar bottom */}
+        <Box sx={{ px: 1.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 1.5,
+              py: 1.25,
+              bgcolor: 'rgba(26,26,46,0.04)',
+              borderRadius: 2,
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'rgba(26,26,46,0.08)' },
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                bgcolor: '#1a1a2e',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <HeadsetMic sx={{ color: '#fff', fontSize: 15 }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.8rem', lineHeight: 1.2 }}>
+                Support
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                We're online
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Box>
 
       {/* ── Main content ──────────────────────────────────────── */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+        {/* Panel header */}
+        <Box
+          sx={{
+            px: { xs: 3, md: 4 },
+            py: 1.25,
+            bgcolor: '#fff',
+            borderBottom: '1px solid',
+            borderColor: 'grey.100',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 0.5,
+            flexShrink: 0,
+            zIndex: 20,
+          }}
+        >
+          <Tooltip title="Help">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <HelpOutline sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Notifications">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <Badge badgeContent={2} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
+                <NotificationsNone sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={user?.name ?? 'Profile'}>
+            <Avatar
+              sx={{ width: 30, height: 30, bgcolor: '#1a1a2e', fontSize: 13, cursor: 'pointer', ml: 0.75 }}
+            >
+              {user?.name?.[0]?.toUpperCase() ?? 'U'}
+            </Avatar>
+          </Tooltip>
+        </Box>
+
         {/* Scrollable area */}
         <Box sx={{ flex: 1, overflowY: 'auto', pb: 12 }}>
           {/* Page header */}
@@ -409,7 +531,7 @@ export default function Onboarding() {
 
               <Box>
                 <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                  Primary Industry Focus
+                  Primary Category Focus
                 </Typography>
                 <FormControl fullWidth>
                   <Select
@@ -417,9 +539,9 @@ export default function Onboarding() {
                     onChange={setSelect('industryFocus')}
                     sx={{ borderRadius: 2 }}
                   >
-                    {INDUSTRIES.map((ind) => (
-                      <MenuItem key={ind} value={ind}>
-                        {ind}
+                    {CATEGORIES.map((cat) => (
+                      <MenuItem key={cat} value={cat}>
+                        {cat}
                       </MenuItem>
                     ))}
                   </Select>
@@ -556,7 +678,7 @@ export default function Onboarding() {
                   elevation={0}
                   sx={{
                     flex: 1,
-                    minWidth: 200,
+                    minWidth: 220,
                     p: 2.5,
                     border: '1px solid',
                     borderColor: 'grey.200',
@@ -570,20 +692,48 @@ export default function Onboarding() {
                     </Typography>
                   </Box>
                   <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-                    Verification of active LinkedIn &amp; Twitter profiles.
+                    Import your social profiles for verification.
                   </Typography>
-                  <Chip
-                    label="LINKED VERIFIED"
-                    size="small"
-                    sx={{
-                      bgcolor: '#e8f5e9',
-                      color: '#2e7d32',
-                      fontWeight: 700,
-                      fontSize: '0.65rem',
-                      letterSpacing: 0.5,
-                      height: 22,
-                    }}
-                  />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {[
+                      { key: 'instagram', label: 'Instagram', icon: <Instagram sx={{ fontSize: 16 }} />, color: '#E1306C' },
+                      { key: 'linkedin', label: 'LinkedIn', icon: <LinkedIn sx={{ fontSize: 16 }} />, color: '#0077B5' },
+                      { key: 'twitter', label: 'Twitter / X', icon: <Twitter sx={{ fontSize: 16 }} />, color: '#1DA1F2' },
+                    ].map(({ key, label, icon, color }) =>
+                      socialImports[key] ? (
+                        <Box
+                          key={key}
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}
+                        >
+                          <CheckCircle sx={{ fontSize: 16, color: '#2e7d32' }} />
+                          <Typography variant="caption" fontWeight={600} color="#2e7d32">
+                            {label} imported for verification
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Button
+                          key={key}
+                          size="small"
+                          variant="outlined"
+                          startIcon={icon}
+                          onClick={() => setSocialImports((prev) => ({ ...prev, [key]: true }))}
+                          sx={{
+                            justifyContent: 'flex-start',
+                            borderColor: color,
+                            color: color,
+                            borderRadius: 2,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            py: 0.5,
+                            textTransform: 'none',
+                            '&:hover': { bgcolor: `${color}10`, borderColor: color },
+                          }}
+                        >
+                          Import {label}
+                        </Button>
+                      )
+                    )}
+                  </Box>
                 </Paper>
 
                 {/* Security Rating */}
@@ -607,19 +757,39 @@ export default function Onboarding() {
                   <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
                     SSL &amp; Domain authority score assessment.
                   </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={78}
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: 'grey.200',
-                      '& .MuiLinearProgress-bar': { bgcolor: '#3366cc', borderRadius: 3 },
-                    }}
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
-                    Score: 78/100
-                  </Typography>
+                  {form.websiteUrl.trim() ? (
+                    <>
+                      <LinearProgress
+                        variant="determinate"
+                        value={securityScore}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: 'grey.200',
+                          transition: 'none',
+                          '& .MuiLinearProgress-bar': {
+                            bgcolor: securityScore >= 80 ? '#2e7d32' : '#3366cc',
+                            borderRadius: 3,
+                            transition: 'transform 0.02s linear',
+                          },
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 0.75 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Score: {securityScore}/100
+                        </Typography>
+                        {securityScore === 85 && (
+                          <Typography variant="caption" fontWeight={700} color="#2e7d32">
+                            Good
+                          </Typography>
+                        )}
+                      </Box>
+                    </>
+                  ) : (
+                    <Typography variant="caption" color="text.disabled" display="block">
+                      Enter a URL above to scan
+                    </Typography>
+                  )}
                 </Paper>
               </Box>
             </SectionCard>
@@ -688,62 +858,6 @@ export default function Onboarding() {
           </Box>
         </Box>
       </Box>
-
-      {/* ── Floating support chat ─────────────────────────────── */}
-      <Paper
-        elevation={4}
-        sx={{
-          position: 'fixed',
-          bottom: 80,
-          right: 24,
-          width: 288,
-          p: 2.5,
-          borderRadius: 3,
-          zIndex: 200,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              bgcolor: '#1a1a2e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <HeadsetMic sx={{ color: '#fff', fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography variant="body2" fontWeight={700}>
-              Need assistance?
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Concierge v3.4 is online
-            </Typography>
-          </Box>
-        </Box>
-        <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-          Vetting typically takes 3–5 business days. Ensure your leadership documents are current.
-        </Typography>
-        <Button
-          fullWidth
-          variant="contained"
-          size="small"
-          sx={{
-            bgcolor: '#1a1a2e',
-            '&:hover': { bgcolor: '#2d2d4e' },
-            fontWeight: 600,
-            borderRadius: 2,
-            py: 1,
-          }}
-        >
-          Open Support Chat
-        </Button>
-      </Paper>
 
       {/* Draft saved snackbar */}
       <Snackbar

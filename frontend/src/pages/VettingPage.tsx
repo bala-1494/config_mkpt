@@ -724,12 +724,14 @@ export default function VettingPage() {
         clearInterval(id)
         setTimeout(async () => {
           if (user?.id) {
-            const { error } = await supabase.from('seller_leads').upsert({
-              seller: user.id,
-              vetting_passed: true,
-              vetting_passed_at: new Date().toISOString(),
-              journey_step: 'bsa',
-            }, { onConflict: 'seller' })
+            const { error } = await supabase
+              .from('seller_leads')
+              .update({
+                vetting_passed: true,
+                vetting_passed_at: new Date().toISOString(),
+                journey_step: 'bsa',
+              })
+              .eq('seller', user.id)
             if (error) {
               console.error('Failed to save vetting result:', error)
               setSaveError(`Failed to save vetting result: ${error.message}`)
@@ -803,12 +805,14 @@ export default function VettingPage() {
               onAgreedChange={setAgreed}
               onAccept={async () => {
                 if (user?.id) {
-                  const { error } = await supabase.from('seller_leads').upsert({
-                    seller: user.id,
-                    agreement_accepted: true,
-                    agreement_accepted_at: new Date().toISOString(),
-                    journey_step: 'complete',
-                  }, { onConflict: 'seller' })
+                  const { error } = await supabase
+                    .from('seller_leads')
+                    .update({
+                      agreement_accepted: true,
+                      agreement_accepted_at: new Date().toISOString(),
+                      journey_step: 'complete',
+                    })
+                    .eq('seller', user.id)
                   if (error) {
                     console.error('Failed to save agreement acceptance:', error)
                     setSaveError(`Failed to save agreement: ${error.message}`)

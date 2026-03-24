@@ -11,7 +11,7 @@
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.seller_leads (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller                uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  seller                uuid NOT NULL,
 
   -- Onboarding form fields
   business_name         text,
@@ -60,7 +60,7 @@ CREATE TRIGGER seller_leads_updated_at
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.seller_details (
   id                        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller                    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  seller                    uuid NOT NULL,
 
   contact_number            text,
   business_address          jsonb,   -- { street, city, state, zip, country }
@@ -98,7 +98,7 @@ CREATE TRIGGER seller_details_updated_at
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.seller_documents (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller            uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  seller            uuid NOT NULL,
   doc_type          text NOT NULL,   -- 'w9' | 'form_8822b' | 'address_proof'
   file              text,            -- storage path
   status            text NOT NULL DEFAULT 'not_uploaded',
@@ -120,7 +120,7 @@ CREATE TRIGGER seller_documents_updated_at
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.brand_docs (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  seller            uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  seller            uuid NOT NULL,
   brand_name        text NOT NULL,
   classification    text,   -- 'reseller' | 'original_manufacturer'
   auth_file         text,   -- storage path

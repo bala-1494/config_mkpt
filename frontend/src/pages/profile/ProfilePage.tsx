@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import type { SellerProfile, Address, Warehouse } from '../../types'
+import type { SellerProfile, SellerLead, SellerDetails, Address, Warehouse } from '../../types'
 import StatusBadge from '../../components/StatusBadge'
 
 // ── Tabs ────────────────────────────────────────────────────────────────────
@@ -136,34 +136,31 @@ export default function ProfilePage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<TabId>('basic')
   const [profile, setProfile] = useState<Partial<SellerProfile>>(emptyProfile())
-  const [profileId, setProfileId] = useState<string | null>(null)
+  const [leadId, setLeadId] = useState<string | null>(null)
+  const [detailsId, setDetailsId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
 
   const isApproved = profile.profile_status === 'approved'
   const readonly = isApproved
 
-  // Load profile
+  // Load profile from both tables
   useEffect(() => {
     if (!user) return
     const fetchProfile = async () => {
-      try {
-        const { data } = await supabase
-          .from('seller_profiles')
-          .select('*')
-          .eq('seller', user.id)
-          .single()
-        if (data) {
-          setProfileId(data.id)
-          setProfile(data as SellerProfile)
-        } else {
-          setProfileId(null)
-          setProfile(emptyProfile())
-        }
-      } catch {
-        setProfileId(null)
-        setProfile(emptyProfile())
-      }
+      const [leadRes, detailsRes] = await Promise.all([
+        supabase.from('seller_leads').select('id, business_name, ein, admin_name, business_type, website').eq('seller', user.id).maybeSingle(),
+        supabase.from('seller_details').select('*').eq('seller', user.id).maybeSingle(),
+      ])
+      const lead = leadRes.data as (Pick<SellerLead, 'business_name' | 'ein' | 'admin_name' | 'business_type' | 'website'> & { id: string }) | null
+      const details = detailsRes.data as SellerDetails | null
+      setLeadId(lead?.id ?? null)
+      setDetailsId(details?.id ?? null)
+      setProfile({
+        ...emptyProfile(),
+        ...(lead ? { business_name: lead.business_name, ein: lead.ein, admin_name: lead.admin_name, business_type: lead.business_type, website: lead.website } : {}),
+        ...(details ?? {}),
+      })
     }
     void fetchProfile()
   }, [user])
@@ -173,35 +170,65 @@ export default function ProfilePage() {
     setSaving(true)
     setSaveMsg('')
     try {
-      const data: Record<string, unknown> = {
-        ...profile,
-        seller: user.id,
-        profile_status: profile.profile_status === 'yet_to_submit' ? 'in_progress' : profile.profile_status,
+      // Update identity fields in seller_leads (row was created at signup)
+      if (leadId) {
+        const { error: leadError } = await supabase
+          .from('seller_leads')
+          .update({
+            business_name: profile.business_name ?? '',
+            ein: profile.ein ?? '',
+            admin_name: profile.admin_name ?? '',
+            business_type: profile.business_type ?? '',
+            website: profile.website ?? '',
+          })
+          .eq('id', leadId)
+        if (leadError) throw leadError
       }
-      if (profileId) {
+
+      // Upsert extended attributes in seller_details
+      const detailsData: Record<string, unknown> = {
+        seller: user.id,
+        contact_number: profile.contact_number ?? '',
+        business_address: profile.business_address ?? null,
+        warehouses: profile.warehouses ?? [],
+        brands: profile.brands ?? [],
+        privacy_policy: profile.privacy_policy ?? '',
+        return_window_days: profile.return_window_days ?? null,
+        restocking_fee_percent: profile.restocking_fee_percent ?? null,
+        return_description: profile.return_description ?? '',
+        duns_number: profile.duns_number ?? '',
+        tin: profile.tin ?? '',
+        profile_status: profile.profile_status === 'yet_to_submit' ? 'in_progress' : (profile.profile_status ?? 'in_progress'),
+        stripe_connected: profile.stripe_connected ?? false,
+        integrations: profile.integrations ?? {},
+        partner_services: profile.partner_services ?? {},
+      }
+
+      if (detailsId) {
         const { data: rec, error } = await supabase
-          .from('seller_profiles')
-          .update(data)
-          .eq('id', profileId)
+          .from('seller_details')
+          .update(detailsData)
+          .eq('id', detailsId)
           .select()
           .single()
         if (error) throw error
         if (rec) {
-          setProfileId(rec.id)
-          setProfile(rec as SellerProfile)
+          setDetailsId(rec.id)
+          setProfile((p) => ({ ...p, ...(rec as SellerDetails) }))
         }
       } else {
         const { data: rec, error } = await supabase
-          .from('seller_profiles')
-          .insert(data)
+          .from('seller_details')
+          .insert(detailsData)
           .select()
           .single()
         if (error) throw error
         if (rec) {
-          setProfileId(rec.id)
-          setProfile(rec as SellerProfile)
+          setDetailsId(rec.id)
+          setProfile((p) => ({ ...p, ...(rec as SellerDetails) }))
         }
       }
+
       setSaveMsg('Saved successfully')
       setTimeout(() => setSaveMsg(''), 3000)
     } catch {
@@ -209,7 +236,7 @@ export default function ProfilePage() {
     } finally {
       setSaving(false)
     }
-  }, [user, profile, profileId, readonly])
+  }, [user, profile, leadId, detailsId, readonly])
 
   const set = (key: keyof SellerProfile) => (value: unknown) =>
     setProfile((p) => ({ ...p, [key]: value }))

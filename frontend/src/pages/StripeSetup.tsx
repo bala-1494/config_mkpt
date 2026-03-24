@@ -15,10 +15,10 @@ export default function StripeSetup() {
     const fetchProfile = async () => {
       try {
         const { data } = await supabase
-          .from('seller_profiles')
+          .from('seller_details')
           .select('id, stripe_connected')
           .eq('seller', user.id)
-          .single()
+          .maybeSingle()
         if (data) {
           setProfileId(data.id)
           if (data.stripe_connected) setState('connected')
@@ -51,12 +51,12 @@ export default function StripeSetup() {
       try {
         if (profileId) {
           await supabase
-            .from('seller_profiles')
+            .from('seller_details')
             .update({ stripe_connected: true })
             .eq('id', profileId)
         } else if (user) {
           const { data } = await supabase
-            .from('seller_profiles')
+            .from('seller_details')
             .insert({ seller: user.id, stripe_connected: true, profile_status: 'yet_to_submit' })
             .select('id')
             .single()

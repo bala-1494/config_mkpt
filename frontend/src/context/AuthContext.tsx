@@ -79,10 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       if (retryError) throw retryError
 
-      // Create the initial seller profile row so all pages can query it safely
+      // Create the initial seller lead row so journey-tracking queries never miss a row
       const userId = signInData?.user?.id ?? signUpData?.user?.id
       if (userId) {
-        await supabase.from('seller_profiles').insert({
+        await supabase.from('seller_leads').insert({
           seller: userId,
           admin_name: fullName ?? '',
           journey_step: 'onboarding',

@@ -74,7 +74,7 @@ function AuthCard({
         return
       }
       const { data } = await supabase
-        .from('seller_profiles')
+        .from('seller_leads')
         .select('journey_step')
         .eq('seller', userId)
         .maybeSingle()

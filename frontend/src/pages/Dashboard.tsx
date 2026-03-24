@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { SellerProfile, OnboardingTask, TaskStatus } from '../types'
+import type { SellerProfile, SellerLead, SellerDetails, OnboardingTask, TaskStatus } from '../types'
 import {
   Box,
   Typography,
@@ -135,14 +135,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return
     const fetchProfile = async () => {
-      try {
-        const { data } = await supabase
-          .from('seller_profiles')
-          .select('*')
-          .eq('seller', user.id)
-          .single()
-        setProfile(data as SellerProfile | null)
-      } catch {
+      const [leadRes, detailsRes] = await Promise.all([
+        supabase.from('seller_leads').select('business_name, ein, admin_name, business_type, website').eq('seller', user.id).maybeSingle(),
+        supabase.from('seller_details').select('*').eq('seller', user.id).maybeSingle(),
+      ])
+      const lead = leadRes.data as Pick<SellerLead, 'business_name' | 'ein' | 'admin_name' | 'business_type' | 'website'> | null
+      const details = detailsRes.data as SellerDetails | null
+      if (lead || details) {
+        setProfile({ ...(lead ?? {}), ...(details ?? {}) } as SellerProfile)
+      } else {
         setProfile(null)
       }
     }

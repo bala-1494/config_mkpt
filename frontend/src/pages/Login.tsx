@@ -29,7 +29,7 @@ function AuthCard({
   mode: CardMode
   onSwitchMode: (m: CardMode) => void
 }) {
-  const { sendOtp, verifyOtp } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState<Step>('form')
@@ -48,20 +48,12 @@ function AuthCard({
     onSwitchMode(nextMode)
   }
 
-  const handleGetOtp = async (e: React.FormEvent) => {
+  const handleGetOtp = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!email.trim()) return
     if (mode === 'register' && !fullName.trim()) return
-    setLoading(true)
-    try {
-      await sendOtp(email, mode === 'register' ? fullName : undefined)
-      setStep('otp')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    setStep('otp')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +61,7 @@ function AuthCard({
     setError('')
     setLoading(true)
     try {
-      await verifyOtp(email, otp)
+      await login(email, otp)
       if (mode === 'register') {
         navigate('/onboarding')
         return
@@ -193,7 +185,6 @@ function AuthCard({
               type="submit"
               variant="outlined"
               fullWidth
-              disabled={loading}
               sx={{
                 py: 1.5,
                 mb: 0.5,
@@ -204,9 +195,8 @@ function AuthCard({
                 color: '#CC0000',
                 '&:hover': { borderColor: '#a00000', bgcolor: 'rgba(204,0,0,0.04)' },
               }}
-              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              {loading ? 'Sending...' : 'Get OTP'}
+              Get OTP
             </Button>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
               We'll send a one-time passcode to your email.

@@ -5,12 +5,13 @@ import type { User } from '../types'
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  sendOtp: (email: string, fullName?: string) => Promise<void>
-  verifyOtp: (email: string, token: string) => Promise<void>
+  login: (email: string, otp: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+const HARDCODED_OTP = '010494'
 
 function mapSupabaseUser(supaUser: { id: string; email?: string; user_metadata?: Record<string, string> }): User {
   const role: 'seller' | 'approver' = supaUser.email?.includes('tgt.com') ? 'approver' : 'seller'
@@ -47,20 +48,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const sendOtp = async (email: string, fullName?: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        data: fullName ? { full_name: fullName } : undefined,
-      },
-    })
-    if (error) throw error
-  }
+  const login = async (email: string, otp: string) => {
+    if (otp !== HARDCODED_OTP) {
+      throw new Error('Invalid OTP. Please try again.')
+    }
 
-  const verifyOtp = async (email: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
-    if (error) throw error
+    // Try signing in with email + hardcoded OTP as password
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: HARDCODED_OTP,
+    })
+
+    if (!signInError) return
+
+    // User doesn't exist yet — create the account (sign-up)
+    if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: HARDCODED_OTP,
+      })
+      if (signUpError) throw signUpError
+
+      // Sign in after account creation
+      const { error: retryError } = await supabase.auth.signInWithPassword({
+        email,
+        password: HARDCODED_OTP,
+      })
+      if (retryError) throw retryError
+    } else {
+      throw signInError
+    }
   }
 
   const logout = async () => {
@@ -69,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, sendOtp, verifyOtp, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -29,7 +29,7 @@ function AuthCard({
   mode: CardMode
   onSwitchMode: (m: CardMode) => void
 }) {
-  const { login } = useAuth()
+  const { sendOtp, verifyOtp } = useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState<Step>('form')
@@ -48,12 +48,20 @@ function AuthCard({
     onSwitchMode(nextMode)
   }
 
-  const handleGetOtp = (e: React.FormEvent) => {
+  const handleGetOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!email.trim()) return
     if (mode === 'register' && !fullName.trim()) return
-    setStep('otp')
+    setLoading(true)
+    try {
+      await sendOtp(email, mode === 'register' ? fullName : undefined)
+      setStep('otp')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,22 +69,27 @@ function AuthCard({
     setError('')
     setLoading(true)
     try {
-      await login(email, otp)
+      await verifyOtp(email, otp)
       if (mode === 'register') {
         navigate('/onboarding')
         return
       }
       // Returning sign-in: redirect to where user left off
-      const userId = `mock-${email}`
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+      if (!userId) {
+        navigate('/onboarding')
+        return
+      }
       const { data } = await supabase
         .from('seller_profiles')
         .select('journey_step')
         .eq('seller', userId)
         .maybeSingle()
-      const step = data?.journey_step
-      if (step === 'complete') {
+      const journeyStep = data?.journey_step
+      if (journeyStep === 'complete') {
         navigate('/dashboard')
-      } else if (step === 'vetting' || step === 'bsa') {
+      } else if (journeyStep === 'vetting' || journeyStep === 'bsa') {
         navigate('/vetting')
       } else {
         navigate('/onboarding')
@@ -180,6 +193,7 @@ function AuthCard({
               type="submit"
               variant="outlined"
               fullWidth
+              disabled={loading}
               sx={{
                 py: 1.5,
                 mb: 0.5,
@@ -190,8 +204,9 @@ function AuthCard({
                 color: '#CC0000',
                 '&:hover': { borderColor: '#a00000', bgcolor: 'rgba(204,0,0,0.04)' },
               }}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              Get OTP
+              {loading ? 'Sending...' : 'Get OTP'}
             </Button>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
               We'll send a one-time passcode to your email.

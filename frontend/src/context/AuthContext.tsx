@@ -1,57 +1,75 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  login: (email: string, otp: string) => Promise<void>
+  sendOtp: (email: string, fullName?: string) => Promise<void>
+  verifyOtp: (email: string, token: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const HARDCODED_OTP = '010494'
-const MOCK_USER_KEY = 'mock_seller_user'
+function mapSupabaseUser(supaUser: { id: string; email?: string; user_metadata?: Record<string, string> }): User {
+  const role: 'seller' | 'approver' = supaUser.email?.includes('tgt.com') ? 'approver' : 'seller'
+  return {
+    id: supaUser.id,
+    email: supaUser.email ?? '',
+    role,
+    name: supaUser.user_metadata?.full_name,
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore mock user from localStorage
-    const stored = localStorage.getItem(MOCK_USER_KEY)
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored) as User)
-      } catch {
-        localStorage.removeItem(MOCK_USER_KEY)
+    // Restore session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user))
       }
-    }
-    setLoading(false)
+      setLoading(false)
+    })
+
+    // Keep user in sync with Supabase auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user))
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, otp: string) => {
-    if (otp !== HARDCODED_OTP) {
-      throw new Error('Invalid OTP. Please try again.')
-    }
-    // Determine role based on email domain
-    const role: 'seller' | 'approver' = email.includes('tgt.com') ? 'approver' : 'seller'
-    const mockUser: User = {
-      id: `mock-${email}`,
+  const sendOtp = async (email: string, fullName?: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      role,
-    }
-    localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mockUser))
-    setUser(mockUser)
+      options: {
+        shouldCreateUser: true,
+        data: fullName ? { full_name: fullName } : undefined,
+      },
+    })
+    if (error) throw error
   }
 
-  const logout = () => {
-    localStorage.removeItem(MOCK_USER_KEY)
+  const verifyOtp = async (email: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+    if (error) throw error
+  }
+
+  const logout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, sendOtp, verifyOtp, logout }}>
       {children}
     </AuthContext.Provider>
   )

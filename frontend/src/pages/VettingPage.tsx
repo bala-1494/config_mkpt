@@ -690,6 +690,7 @@ export default function VettingPage() {
   const [progress, setProgress] = useState(0)
   const [agreed, setAgreed] = useState(false)
   const [snackbar, setSnackbar] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Resume: skip to BSA phase if vetting already passed, or to dashboard if agreement accepted
   useEffect(() => {
@@ -723,12 +724,17 @@ export default function VettingPage() {
         clearInterval(id)
         setTimeout(async () => {
           if (user?.id) {
-            await supabase.from('seller_leads').upsert({
+            const { error } = await supabase.from('seller_leads').upsert({
               seller: user.id,
               vetting_passed: true,
               vetting_passed_at: new Date().toISOString(),
               journey_step: 'bsa',
             }, { onConflict: 'seller' })
+            if (error) {
+              console.error('Failed to save vetting result:', error)
+              setSaveError(`Failed to save vetting result: ${error.message}`)
+              return
+            }
           }
           setPhase('bsa')
         }, 700)
@@ -797,12 +803,17 @@ export default function VettingPage() {
               onAgreedChange={setAgreed}
               onAccept={async () => {
                 if (user?.id) {
-                  await supabase.from('seller_leads').upsert({
+                  const { error } = await supabase.from('seller_leads').upsert({
                     seller: user.id,
                     agreement_accepted: true,
                     agreement_accepted_at: new Date().toISOString(),
                     journey_step: 'complete',
                   }, { onConflict: 'seller' })
+                  if (error) {
+                    console.error('Failed to save agreement acceptance:', error)
+                    setSaveError(`Failed to save agreement: ${error.message}`)
+                    return
+                  }
                 }
                 navigate('/dashboard')
               }}
@@ -821,6 +832,18 @@ export default function VettingPage() {
       >
         <Alert severity="info" onClose={() => setSnackbar(false)} sx={{ borderRadius: 2 }}>
           PDF download will be available once the agreement is signed.
+        </Alert>
+      </Snackbar>
+
+      {/* Save error snackbar */}
+      <Snackbar
+        open={!!saveError}
+        autoHideDuration={6000}
+        onClose={() => setSaveError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setSaveError(null)} sx={{ borderRadius: 2 }}>
+          {saveError}
         </Alert>
       </Snackbar>
     </Box>

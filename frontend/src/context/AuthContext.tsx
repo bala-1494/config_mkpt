@@ -90,11 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Create the initial seller lead row so journey-tracking queries never miss a row
       if (userId) {
-        await supabase.from('seller_leads').insert({
+        const { error: leadError } = await supabase.from('seller_leads').insert({
           seller: userId,
           admin_name: fullName ?? '',
           journey_step: 'onboarding',
         })
+        if (leadError) {
+          console.error('Failed to create seller lead row:', leadError)
+        }
       }
     } else {
       throw signInError

@@ -200,6 +200,7 @@ export default function Onboarding() {
   const [attempted, setAttempted] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [securityScore, setSecurityScore] = useState(0)
   const [socialImports, setSocialImports] = useState<Record<string, boolean>>({
     instagram: false,
@@ -284,7 +285,7 @@ export default function Onboarding() {
 
   const handleSaveDraft = async () => {
     if (!user?.id) return
-    await supabase.from('seller_leads').upsert({
+    const { error } = await supabase.from('seller_leads').upsert({
       seller: user.id,
       business_name: form.legalBusinessName,
       ein: form.taxId,
@@ -295,6 +296,11 @@ export default function Onboarding() {
       website: form.websiteUrl,
       journey_step: 'onboarding',
     }, { onConflict: 'seller' })
+    if (error) {
+      console.error('Failed to save draft:', error)
+      setSaveError(`Failed to save draft: ${error.message}`)
+      return
+    }
     setDraftSaved(true)
   }
 
@@ -302,7 +308,7 @@ export default function Onboarding() {
     setAttempted(true)
     if (totalMissing > 0) return
     if (!user?.id) return
-    await supabase.from('seller_leads').upsert({
+    const { error } = await supabase.from('seller_leads').upsert({
       seller: user.id,
       business_name: form.legalBusinessName,
       ein: form.taxId,
@@ -313,6 +319,11 @@ export default function Onboarding() {
       website: form.websiteUrl,
       journey_step: 'vetting',
     }, { onConflict: 'seller' })
+    if (error) {
+      console.error('Failed to complete onboarding:', error)
+      setSaveError(`Failed to save onboarding data: ${error.message}`)
+      return
+    }
     navigate('/vetting')
   }
 
@@ -868,6 +879,18 @@ export default function Onboarding() {
       >
         <Alert severity="success" onClose={() => setDraftSaved(false)} sx={{ borderRadius: 2 }}>
           Draft saved successfully.
+        </Alert>
+      </Snackbar>
+
+      {/* Save error snackbar */}
+      <Snackbar
+        open={!!saveError}
+        autoHideDuration={6000}
+        onClose={() => setSaveError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setSaveError(null)} sx={{ borderRadius: 2 }}>
+          {saveError}
         </Alert>
       </Snackbar>
     </Box>

@@ -205,10 +205,10 @@ function AuthCard({
         ) : (
           <>
             <Typography variant="body2" color="text.secondary" mb={0.5}>
-              Use the demo passcode below to sign in.
+              We've sent a one-time passcode to
             </Typography>
             <Typography variant="body2" fontWeight={700} color="text.primary" mb={2}>
-              (Hint: <Box component="span" sx={{ fontFamily: 'monospace', bgcolor: 'grey.100', px: 0.5, borderRadius: 1 }}>010494</Box>)
+              {email}
             </Typography>
 
             <Typography

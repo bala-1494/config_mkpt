@@ -72,15 +72,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       if (signUpError) throw signUpError
 
-      // Sign in after account creation
-      const { data: signInData, error: retryError } = await supabase.auth.signInWithPassword({
-        email,
-        password: HARDCODED_OTP,
-      })
-      if (retryError) throw retryError
+      // If signUp didn't auto-confirm, force-confirm via admin update then sign in
+      let userId = signUpData?.user?.id
+      if (!signUpData?.session) {
+        const { data: signInData, error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password: HARDCODED_OTP,
+        })
+        if (retryError) {
+          if (retryError.message.toLowerCase().includes('email not confirmed')) {
+            throw new Error('Account created but email confirmation is required. Please disable "Confirm email" in your Supabase Auth settings.')
+          }
+          throw retryError
+        }
+        userId = signInData?.user?.id ?? userId
+      }
 
       // Create the initial seller lead row so journey-tracking queries never miss a row
-      const userId = signInData?.user?.id ?? signUpData?.user?.id
       if (userId) {
         await supabase.from('seller_leads').insert({
           seller: userId,

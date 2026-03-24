@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import {
   Box,
   Typography,
@@ -690,6 +691,24 @@ export default function VettingPage() {
   const [agreed, setAgreed] = useState(false)
   const [snackbar, setSnackbar] = useState(false)
 
+  // Resume: skip to BSA phase if vetting already passed, or to dashboard if agreement accepted
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('seller_profiles')
+      .select('vetting_passed, agreement_accepted')
+      .eq('seller', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.agreement_accepted) {
+          navigate('/dashboard')
+        } else if (data?.vetting_passed) {
+          setPhase('bsa')
+          setProgress(100)
+        }
+      })
+  }, [user?.id, navigate])
+
   // Animate progress 0→100 over VETTING_DURATION_MS
   useEffect(() => {
     if (phase !== 'vetting') return
@@ -702,7 +721,17 @@ export default function VettingPage() {
 
       if (pct >= 100) {
         clearInterval(id)
-        setTimeout(() => setPhase('bsa'), 700)
+        setTimeout(async () => {
+          if (user?.id) {
+            await supabase.from('seller_profiles').upsert({
+              seller: user.id,
+              vetting_passed: true,
+              vetting_passed_at: new Date().toISOString(),
+              journey_step: 'bsa',
+            }, { onConflict: 'seller' })
+          }
+          setPhase('bsa')
+        }, 700)
       }
     }, 200)
 
@@ -766,7 +795,17 @@ export default function VettingPage() {
             <BSAContent
               agreed={agreed}
               onAgreedChange={setAgreed}
-              onAccept={() => navigate('/dashboard')}
+              onAccept={async () => {
+                if (user?.id) {
+                  await supabase.from('seller_profiles').upsert({
+                    seller: user.id,
+                    agreement_accepted: true,
+                    agreement_accepted_at: new Date().toISOString(),
+                    journey_step: 'complete',
+                  }, { onConflict: 'seller' })
+                }
+                navigate('/dashboard')
+              }}
               onDownload={() => setSnackbar(true)}
             />
           )}

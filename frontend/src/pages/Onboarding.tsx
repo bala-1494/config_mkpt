@@ -13,7 +13,6 @@ import {
   ToggleButtonGroup,
   Button,
   LinearProgress,
-  Chip,
   InputAdornment,
   Snackbar,
   Alert,
@@ -41,6 +40,7 @@ import {
   NotificationsNone,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
+import { supabase } from '../lib/supabase'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface FormData {
@@ -211,6 +211,29 @@ export default function Onboarding() {
   const leadershipRef = useRef<HTMLDivElement>(null)
   const digitalRef = useRef<HTMLDivElement>(null)
 
+  // Load persisted draft from Supabase on mount
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('seller_profiles')
+      .select('business_name, ein, onboarding_industry, admin_name, onboarding_designation, business_type, website')
+      .eq('seller', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return
+        setForm((prev) => ({
+          ...prev,
+          legalBusinessName: data.business_name ?? prev.legalBusinessName,
+          taxId: data.ein ?? prev.taxId,
+          industryFocus: data.onboarding_industry ?? prev.industryFocus,
+          leadExecutiveName: data.admin_name ?? prev.leadExecutiveName,
+          designation: data.onboarding_designation ?? prev.designation,
+          orgStructure: data.business_type ?? prev.orgStructure,
+          websiteUrl: data.website ?? prev.websiteUrl,
+        }))
+      })
+  }, [user?.id])
+
   const setField = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
@@ -259,16 +282,37 @@ export default function Onboarding() {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const handleSaveDraft = () => {
-    localStorage.setItem(`onboarding_draft_${user?.id}`, JSON.stringify(form))
+  const handleSaveDraft = async () => {
+    if (!user?.id) return
+    await supabase.from('seller_profiles').upsert({
+      seller: user.id,
+      business_name: form.legalBusinessName,
+      ein: form.taxId,
+      onboarding_industry: form.industryFocus,
+      admin_name: form.leadExecutiveName,
+      onboarding_designation: form.designation,
+      business_type: form.orgStructure,
+      website: form.websiteUrl,
+      journey_step: 'onboarding',
+    }, { onConflict: 'seller' })
     setDraftSaved(true)
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     setAttempted(true)
     if (totalMissing > 0) return
-    localStorage.setItem(`onboarding_complete_${user?.id}`, 'true')
-    localStorage.setItem(`onboarding_data_${user?.id}`, JSON.stringify(form))
+    if (!user?.id) return
+    await supabase.from('seller_profiles').upsert({
+      seller: user.id,
+      business_name: form.legalBusinessName,
+      ein: form.taxId,
+      onboarding_industry: form.industryFocus,
+      admin_name: form.leadExecutiveName,
+      onboarding_designation: form.designation,
+      business_type: form.orgStructure,
+      website: form.websiteUrl,
+      journey_step: 'vetting',
+    }, { onConflict: 'seller' })
     navigate('/vetting')
   }
 

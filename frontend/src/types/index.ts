@@ -53,7 +53,16 @@ export interface SellerProfile {
   stripe_connected: boolean
   integrations: Record<string, boolean>
   partner_services: Record<string, boolean>
+  onboarding_industry: string | null
+  onboarding_designation: string | null
+  journey_step: JourneyStep | null
+  vetting_passed: boolean | null
+  vetting_passed_at: string | null
+  agreement_accepted: boolean | null
+  agreement_accepted_at: string | null
 }
+
+export type JourneyStep = 'onboarding' | 'vetting' | 'bsa' | 'complete'
 
 export interface SellerDocument {
   id: string

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import {
   Box,
   Button,
@@ -61,7 +62,25 @@ function AuthCard({
     setLoading(true)
     try {
       await login(email, otp)
-      navigate(mode === 'register' ? '/onboarding' : '/dashboard')
+      if (mode === 'register') {
+        navigate('/onboarding')
+        return
+      }
+      // Returning sign-in: redirect to where user left off
+      const userId = `mock-${email}`
+      const { data } = await supabase
+        .from('seller_profiles')
+        .select('journey_step')
+        .eq('seller', userId)
+        .maybeSingle()
+      const step = data?.journey_step
+      if (step === 'complete') {
+        navigate('/dashboard')
+      } else if (step === 'vetting' || step === 'bsa') {
+        navigate('/vetting')
+      } else {
+        navigate('/onboarding')
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.')
     } finally {

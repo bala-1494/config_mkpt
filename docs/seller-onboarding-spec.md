@@ -29,8 +29,6 @@ Six onboarding task cards, each with:
 | Documentation | Business licenses and tax forms |
 | Item Setup | Product inventory import |
 | Stripe Setup | Payment processing configuration |
-| Integrations | Third-party integrations (optional) |
-| Partner Services | Fulfillment and marketing partners (optional) |
 
 ---
 
@@ -123,36 +121,6 @@ Sellers progress through four tracked stages:
   - `vetting` or `bsa` → `/vetting`
   - Otherwise → `/onboarding`
 - Timestamps recorded: `vetting_passed_at`, `agreement_accepted_at`
-
----
-
-### Integrations
-
-Available at `/dashboard/integrations` (optional task). Lists five integration options — all currently in "Coming Soon" state, enabled post-approval:
-
-| Integration | Description |
-|-------------|-------------|
-| Shopify | Sync inventory and orders |
-| WooCommerce | Order management |
-| Amazon Seller Central | Import and sync listings |
-| Google Merchant Center | Push to Google Shopping |
-| QuickBooks | Sync invoices and financials |
-
----
-
-### Partner Services
-
-Available at `/dashboard/partners` (optional task). Six partners across two categories — all currently in "Coming Soon" state, enabled post-approval:
-
-**Fulfillment**
-- FedEx Fulfillment
-- UPS Supply Chain
-- ShipBob
-
-**Marketing**
-- Klaviyo — Email/SMS marketing
-- Meta Ads — Facebook/Instagram ads
-- Bazaarvoice — Reviews syndication
 
 ---
 

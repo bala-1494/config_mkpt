@@ -19,8 +19,6 @@ import {
   Description,
   Inventory,
   CreditCard,
-  Extension,
-  Group,
   CheckCircle,
   RadioButtonUnchecked,
   HourglassTop,
@@ -42,8 +40,6 @@ const TASK_ICONS: Record<string, React.ReactElement> = {
   documentation: <Description />,
   item_setup: <Inventory />,
   stripe: <CreditCard />,
-  integrations: <Extension />,
-  partners: <Group />,
 }
 
 const TASK_COLORS: Record<string, string> = {
@@ -51,8 +47,6 @@ const TASK_COLORS: Record<string, string> = {
   documentation: '#1565C0',
   item_setup: '#2E7D32',
   stripe: '#6A1B9A',
-  integrations: '#E65100',
-  partners: '#00695C',
 }
 
 function computeTasks(profile: SellerProfile | null, stripeConnected: boolean): OnboardingTask[] {
@@ -105,24 +99,6 @@ function computeTasks(profile: SellerProfile | null, stripeConnected: boolean): 
       route: '/dashboard/stripe',
       progress: stripeConnected ? 100 : 0,
       status: (stripeConnected ? 'approved' : 'yet_to_submit') as TaskStatus,
-    },
-    {
-      key: 'integrations',
-      label: 'Integrations',
-      description: 'Third-party integrations',
-      route: '/dashboard/integrations',
-      progress: 0,
-      status: 'yet_to_submit',
-      optional: true,
-    },
-    {
-      key: 'partners',
-      label: 'Partner Services',
-      description: 'Fulfillment and marketing partners',
-      route: '/dashboard/partners',
-      progress: 0,
-      status: 'yet_to_submit',
-      optional: true,
     },
   ]
 }

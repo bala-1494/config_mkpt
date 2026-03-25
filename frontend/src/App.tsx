@@ -11,8 +11,6 @@ import Dashboard from './pages/Dashboard'
 import ProfilePage from './pages/profile/ProfilePage'
 import Documentation from './pages/Documentation'
 import StripeSetup from './pages/StripeSetup'
-import Integrations from './pages/Integrations'
-import PartnerServices from './pages/PartnerServices'
 
 const theme = createTheme({
   palette: {
@@ -121,26 +119,6 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <StripeSetup />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/integrations"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Integrations />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/partners"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <PartnerServices />
             </Layout>
           </ProtectedRoute>
         }

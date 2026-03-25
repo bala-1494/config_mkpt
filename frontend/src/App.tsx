@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import VettingPage from './pages/VettingPage'
 import CompletePage from './pages/CompletePage'
+import SellerDetailsPage from './pages/SellerDetailsPage'
 
 const theme = createTheme({
   palette: {
@@ -84,6 +85,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CompletePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/seller-details"
+        element={
+          <ProtectedRoute>
+            <SellerDetailsPage />
           </ProtectedRoute>
         }
       />

@@ -200,8 +200,6 @@ export default function ProfilePage() {
         tin: profile.tin ?? '',
         profile_status: profile.profile_status === 'yet_to_submit' ? 'in_progress' : (profile.profile_status ?? 'in_progress'),
         stripe_connected: profile.stripe_connected ?? false,
-        integrations: profile.integrations ?? {},
-        partner_services: profile.partner_services ?? {},
       }
 
       if (detailsId) {

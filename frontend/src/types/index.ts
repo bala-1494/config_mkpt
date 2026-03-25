@@ -70,8 +70,6 @@ export interface SellerDetails {
   tin: string
   profile_status: TaskStatus
   stripe_connected: boolean
-  integrations: Record<string, boolean>
-  partner_services: Record<string, boolean>
 }
 
 /**
@@ -98,8 +96,6 @@ export interface SellerProfile {
   tin: string
   profile_status: TaskStatus
   stripe_connected: boolean
-  integrations: Record<string, boolean>
-  partner_services: Record<string, boolean>
 }
 
 export interface SellerDocument {

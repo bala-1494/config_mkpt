@@ -18,8 +18,6 @@ import {
   Person,
   Description,
   CreditCard,
-  Extension,
-  Group,
   Logout,
   Store,
 } from '@mui/icons-material'
@@ -31,8 +29,6 @@ const navItems = [
   { to: '/dashboard/profile', label: 'Profile Details', icon: <Person /> },
   { to: '/dashboard/documentation', label: 'Documentation', icon: <Description /> },
   { to: '/dashboard/stripe', label: 'Stripe Setup', icon: <CreditCard /> },
-  { to: '/dashboard/integrations', label: 'Integrations', icon: <Extension /> },
-  { to: '/dashboard/partners', label: 'Partner Services', icon: <Group /> },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {

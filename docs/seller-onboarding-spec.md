@@ -29,8 +29,6 @@ Six onboarding task cards, each with:
 | Documentation | Business licenses and tax forms |
 | Item Setup | Product inventory import |
 | Stripe Setup | Payment processing configuration |
-| Integrations | Third-party integrations (optional) |
-| Partner Services | Fulfillment and marketing partners (optional) |
 
 ---
 
@@ -71,3 +69,65 @@ Supports real-time progress tracking, form validation, and view-only mode after 
 - Browse all registered sellers and their submissions
 - Review profile sections and documents in detail
 - Approve or reject individual submissions via modal
+
+---
+
+### Onboarding / Lead Evaluation Form
+
+Three-tab lead evaluation form completed before a seller reaches the dashboard:
+
+1. **01 Identity** — Legal business name, Tax ID, industry focus
+2. **02 Leadership** — Lead executive name, designation, organizational structure (Sole Prop / Partnership / Corporation)
+3. **03 Digital** — Website URL, social media imports (Instagram, LinkedIn, Twitter), real-time security rating assessment
+
+Additional details:
+- Draft save functionality with Supabase persistence
+- Role-based step locking
+- Side navigation with support chat widget
+- Real-time security score animation
+
+---
+
+### Vetting & Business Service Agreement (BSA) Flow
+
+Triggered after the lead evaluation form is submitted. Two sequential phases:
+
+**Vetting Phase**
+- Animated background verification progress (0–100% over 60 seconds)
+- Verification checklist:
+  - Business License Validation
+  - Tax Compliance (W-9 / VAT)
+  - International Sanction List Check (sub-checks: International Registry, Identity Authentication)
+- Info cards explaining the vetting rationale and security/encryption details
+
+**BSA Phase**
+- Displays Business Service Agreement with 5 sections: Introduction, Scope of Services, Fees & Compensation, Data Privacy & Security, Term & Termination
+- Checkbox acceptance required before proceeding
+- "Accept & Continue" button (disabled until checkbox is checked)
+- Download PDF option
+- "Need Help?" support panel and Next Steps guidance card
+
+---
+
+### Journey Step Tracking
+
+Sellers progress through four tracked stages:
+
+`onboarding` → `vetting` → `bsa` → `complete`
+
+- Stored in `seller_leads.journey_step`
+- Smart login redirect: returning users are dropped back into their last stage automatically
+  - `complete` → `/dashboard`
+  - `vetting` or `bsa` → `/vetting`
+  - Otherwise → `/onboarding`
+- Timestamps recorded: `vetting_passed_at`, `agreement_accepted_at`
+
+---
+
+### Login / Landing Page
+
+- Left column with marketing copy and feature cards (Vetted Network, Premium Insights)
+- Unified auth card supporting both new registration and returning sign-in
+- Toggle between "Create account" and "Sign In" modes
+- Footer with Terms of Service, Privacy Policy, Contact links
+- Navigation bar with Process, Support, FAQ links

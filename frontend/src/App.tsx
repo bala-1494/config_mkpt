@@ -79,7 +79,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/complete"
         element={

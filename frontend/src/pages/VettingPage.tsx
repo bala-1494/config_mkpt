@@ -600,8 +600,7 @@ function BSAContent({
               </Typography>
             </Box>
             <Typography variant="caption" color="text.secondary" lineHeight={1.65}>
-              Once accepted, you'll gain immediate access to the dashboard where you can set up your
-              payment profile and list your first service package.
+              Once accepted, your onboarding will be complete and our team will reach out with next steps.
             </Typography>
           </Paper>
 

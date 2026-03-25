@@ -34,13 +34,16 @@ function SideNavItem({
   icon,
   label,
   active,
+  onClick,
 }: {
   icon: React.ReactNode
   label: string
   active?: boolean
+  onClick?: () => void
 }) {
   return (
     <Box
+      onClick={onClick}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -86,6 +89,7 @@ function TaskCard({
   progressValue,
   linkLabel,
   buttonLabel,
+  onLinkClick,
 }: {
   icon: React.ReactNode
   title: string
@@ -95,6 +99,7 @@ function TaskCard({
   progressValue?: number
   linkLabel?: string
   buttonLabel?: string
+  onLinkClick?: () => void
 }) {
   const isCompleted = status === 'completed'
   return (
@@ -180,7 +185,7 @@ function TaskCard({
             fontWeight={600}
             color="#3366cc"
             sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 0.5, '&:hover': { textDecoration: 'underline' } }}
-            onClick={() => {}}
+            onClick={onLinkClick}
           >
             {linkLabel} &rsaquo;
           </Typography>
@@ -374,7 +379,7 @@ export default function CompletePage() {
         </Box>
 
         <Box sx={{ px: 1.5, py: 1.5, flex: 1 }}>
-          <SideNavItem icon={<Person fontSize="inherit" />} label="Partner Profile" active />
+          <SideNavItem icon={<Person fontSize="inherit" />} label="Partner Profile" active onClick={() => navigate('/seller-details')} />
           <SideNavItem icon={<Article fontSize="inherit" />} label="Documentation & KYC" />
           <SideNavItem icon={<CreditCard fontSize="inherit" />} label="Stripe Account Enablement" />
           <SideNavItem icon={<List fontSize="inherit" />} label="Item Listing" />
@@ -553,6 +558,7 @@ export default function CompletePage() {
               description="Basic partner information, contact details, and brand identity for the marketplace."
               status="completed"
               linkLabel="View details"
+              onLinkClick={() => navigate('/seller-details')}
             />
             <TaskCard
               icon={<Article fontSize="inherit" />}

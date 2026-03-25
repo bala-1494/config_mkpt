@@ -80,7 +80,7 @@ function AuthCard({
         .maybeSingle()
       const journeyStep = data?.journey_step
       if (journeyStep === 'complete') {
-        navigate('/dashboard')
+        navigate('/complete')
       } else if (journeyStep === 'vetting' || journeyStep === 'bsa') {
         navigate('/vetting')
       } else {

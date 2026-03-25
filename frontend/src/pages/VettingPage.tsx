@@ -702,7 +702,7 @@ export default function VettingPage() {
       .maybeSingle()
       .then(({ data }) => {
         if (data?.agreement_accepted) {
-          navigate('/dashboard')
+          navigate('/complete')
         } else if (data?.vetting_passed) {
           setPhase('bsa')
           setProgress(100)
@@ -819,7 +819,7 @@ export default function VettingPage() {
                     return
                   }
                 }
-                navigate('/dashboard')
+                navigate('/complete')
               }}
               onDownload={() => setSnackbar(true)}
             />

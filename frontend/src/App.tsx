@@ -3,14 +3,10 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { Box, CircularProgress } from '@mui/material'
-import Layout from './components/Layout'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import VettingPage from './pages/VettingPage'
-import Dashboard from './pages/Dashboard'
-import ProfilePage from './pages/profile/ProfilePage'
-import Documentation from './pages/Documentation'
-import StripeSetup from './pages/StripeSetup'
+import CompletePage from './pages/CompletePage'
 
 const theme = createTheme({
   palette: {
@@ -63,7 +59,7 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+        element={user ? <Navigate to="/complete" replace /> : <Login />}
       />
 
       <Route
@@ -74,6 +70,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/vetting"
         element={
@@ -84,48 +81,16 @@ function AppRoutes() {
       />
 
       <Route
-        path="/dashboard"
+        path="/complete"
         element={
           <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/profile"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <ProfilePage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/documentation"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Documentation />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/stripe"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <StripeSetup />
-            </Layout>
+            <CompletePage />
           </ProtectedRoute>
         }
       />
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/complete" replace />} />
+      <Route path="*" element={<Navigate to="/complete" replace />} />
     </Routes>
   )
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-featured Seller Onboarding Portal that guides vendors through the complete registration and approval process required to sell on a marketplace. It simulates a real-world workflow: sellers submit their profile, documents, and inventory, while an approver reviews and acts on each submission.
+This portal guides vendors through the registration and approval process required to sell on a marketplace. Sellers complete a lead evaluation form, pass vetting, and accept a Business Service Agreement before their application is submitted.
 
 ---
 
@@ -10,71 +10,25 @@ This is a full-featured Seller Onboarding Portal that guides vendors through the
 
 ### Authentication
 - Email + OTP login flow (test OTP: `010494`)
-- Multi-user session support with localStorage persistence
-- Pre-configured demo accounts:
-  - **Seller:** `seller@brand.com` — fully populated profile (Acme Corp)
-  - **Approver:** `approver@tgt.com` — reviewer interface
+- Multi-user session support with Supabase Auth persistence
+- Pre-configured demo account:
+  - **Seller:** `seller@brand.com`
 
 ---
 
-### Seller Dashboard
+### Login / Landing Page
 
-Six onboarding task cards, each with:
-- Progress percentage
-- Color-coded status badges: `Yet to submit` | `In progress` | `Verification pending` | `Approved` | `Action needed`
-
-| Task | Description |
-|------|-------------|
-| Profile Details | Business info and store policies |
-| Documentation | Business licenses and tax forms |
-| Item Setup | Product inventory import |
-| Stripe Setup | Payment processing configuration |
-
----
-
-### Profile Management
-
-Six-tabbed form covering:
-
-1. **Basic Information** — Business name, EIN, contact number, admin name, business type, website
-2. **Addresses & Warehouses** — Business address with dynamic multi-warehouse management
-3. **Branding** — Brands the seller carries
-4. **Privacy Policy** — Store privacy policy text
-5. **Return Policy** — Return window (days), restocking fee %, and description
-6. **Business Details** — DUNS number and TIN
-
-Supports real-time progress tracking, form validation, and view-only mode after approval.
-
----
-
-### Documentation
-
-- **Primary documents:** W9, Form 8822B, Address Proof — with file upload UI
-- **Brand documentation:** Dynamic brand addition, classification (Reseller / Original Manufacturer), authorization document uploads
-- Per-document approval tracking with resubmission support for rejected docs
-
----
-
-### Item Setup
-
-- CSV/Excel file upload for bulk inventory import
-- Processing simulation with a results table showing: Title, Description, Barcode, Item Type
-- Pagination for large catalogs
-
----
-
-### Approver Interface
-
-- Dedicated view for the approver role
-- Browse all registered sellers and their submissions
-- Review profile sections and documents in detail
-- Approve or reject individual submissions via modal
+- Left column with marketing copy and feature cards (Vetted Network, Premium Insights)
+- Unified auth card supporting both new registration and returning sign-in
+- Toggle between "Create account" and "Sign In" modes
+- Footer with Terms of Service, Privacy Policy, Contact links
+- Navigation bar with Process, Support, FAQ links
 
 ---
 
 ### Onboarding / Lead Evaluation Form
 
-Three-tab lead evaluation form completed before a seller reaches the dashboard:
+Three-tab lead evaluation form completed after first login:
 
 1. **01 Identity** — Legal business name, Tax ID, industry focus
 2. **02 Leadership** — Lead executive name, designation, organizational structure (Sole Prop / Partnership / Corporation)
@@ -109,6 +63,12 @@ Triggered after the lead evaluation form is submitted. Two sequential phases:
 
 ---
 
+### Completion Screen
+
+Shown after BSA is accepted (`journey_step = 'complete'`). Confirms the application has been submitted and informs the seller that the team will review and follow up.
+
+---
+
 ### Journey Step Tracking
 
 Sellers progress through four tracked stages:
@@ -117,17 +77,7 @@ Sellers progress through four tracked stages:
 
 - Stored in `seller_leads.journey_step`
 - Smart login redirect: returning users are dropped back into their last stage automatically
-  - `complete` → `/dashboard`
+  - `complete` → `/complete`
   - `vetting` or `bsa` → `/vetting`
   - Otherwise → `/onboarding`
 - Timestamps recorded: `vetting_passed_at`, `agreement_accepted_at`
-
----
-
-### Login / Landing Page
-
-- Left column with marketing copy and feature cards (Vetted Network, Premium Insights)
-- Unified auth card supporting both new registration and returning sign-in
-- Toggle between "Create account" and "Sign In" modes
-- Footer with Terms of Service, Privacy Policy, Contact links
-- Navigation bar with Process, Support, FAQ links

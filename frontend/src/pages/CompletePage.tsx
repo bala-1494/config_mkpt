@@ -316,6 +316,8 @@ export default function CompletePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [progressAngle, setProgressAngle] = useState(0)
+  const [sectionStatuses, setSectionStatuses] = useState<{ section: string; status: string }[]>([])
+  const [statusesLoaded, setStatusesLoaded] = useState(false)
 
   // Redirect users who haven't finished the flow yet
   useEffect(() => {
@@ -335,9 +337,40 @@ export default function CompletePage() {
       })
   }, [user?.id, navigate])
 
-  // Animate circular progress to 50%
+  // Fetch real section statuses for partner profile
   useEffect(() => {
-    const target = 50
+    if (!user?.id) return
+    supabase
+      .from('seller_section_status')
+      .select('section, status')
+      .eq('seller', user.id)
+      .then(({ data }) => {
+        setSectionStatuses(data ?? [])
+        setStatusesLoaded(true)
+      })
+  }, [user?.id])
+
+  // Derive partner profile progress from real data
+  const approvedSections = sectionStatuses.filter(s => s.status === 'approved').length
+  const partnerProfileComplete = approvedSections === 6
+  const partnerProfileProgress = Math.round((approvedSections / 6) * 100)
+
+  // Static placeholders for tasks without real tables yet
+  const kycProgress = 30
+  const stripeComplete = false
+  const itemProgress = 15
+
+  const completedCount =
+    (partnerProfileComplete ? 1 : 0) + (stripeComplete ? 1 : 0)
+
+  const globalProgress = statusesLoaded
+    ? Math.round((partnerProfileProgress + kycProgress + (stripeComplete ? 100 : 0) + itemProgress) / 4)
+    : 0
+
+  // Animate circular progress once data is loaded
+  useEffect(() => {
+    if (!statusesLoaded) return
+    const target = globalProgress
     const duration = 900
     const start = Date.now()
     const tick = () => {
@@ -347,7 +380,7 @@ export default function CompletePage() {
       if (pct < target) requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
-  }, [])
+  }, [statusesLoaded, globalProgress])
 
   const initials = user?.name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? 'U'
 
@@ -547,7 +580,7 @@ export default function CompletePage() {
               Mandatory Setup Tasks
             </Typography>
             <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              2 / 4 Completed
+              {completedCount} / 4 Completed
             </Typography>
           </Box>
 
@@ -556,8 +589,11 @@ export default function CompletePage() {
               icon={<Person fontSize="inherit" />}
               title="Partner Profile"
               description="Basic partner information, contact details, and brand identity for the marketplace."
-              status="completed"
+              status={partnerProfileComplete ? 'completed' : 'in_progress'}
+              progressLabel={`${approvedSections} of 6 sections approved`}
+              progressValue={partnerProfileProgress}
               linkLabel="View details"
+              buttonLabel="CONTINUE SETUP"
               onLinkClick={() => navigate('/seller-details')}
             />
             <TaskCard
@@ -573,8 +609,11 @@ export default function CompletePage() {
               icon={<CreditCard fontSize="inherit" />}
               title="Stripe Account Enablement"
               description="Payment processing setup through Stripe for secure, automated global payouts."
-              status="completed"
+              status={stripeComplete ? 'completed' : 'in_progress'}
+              progressLabel="Account setup"
+              progressValue={0}
               linkLabel="Manage Stripe settings"
+              buttonLabel="CONNECT STRIPE"
             />
             <TaskCard
               icon={<List fontSize="inherit" />}

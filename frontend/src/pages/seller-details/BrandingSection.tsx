@@ -21,7 +21,7 @@ const MAX_LOGO_MB = 5
 const MAX_BANNER_MB = 10
 const ALLOWED_TYPES = ['image/png', 'image/jpeg']
 
-function validateImageFile(file: File, maxMB: number, ratioLabel: string): string | null {
+function validateImageFile(file: File, maxMB: number, _ratioLabel: string): string | null {
   if (!ALLOWED_TYPES.includes(file.type)) return 'Only PNG or JPG files are allowed.'
   if (file.size > maxMB * 1024 * 1024) return `File size must be under ${maxMB}MB.`
   return null

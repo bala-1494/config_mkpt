@@ -1,3 +1,5 @@
+import React from 'react'
+
 /**
  * SectionShell — shared wrapper rendered around every seller-details section.
  *

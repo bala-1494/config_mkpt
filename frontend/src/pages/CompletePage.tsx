@@ -14,6 +14,9 @@ import {
   Badge,
   Chip,
   CircularProgress,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material'
 import {
   CheckCircle,
@@ -27,6 +30,7 @@ import {
   SwapHoriz,
   LocalShipping,
   TrendingUp,
+  Logout,
 } from '@mui/icons-material'
 
 // ── Sidebar nav item ───────────────────────────────────────────────────────────
@@ -313,9 +317,16 @@ function GrowthCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CompletePage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [progressAngle, setProgressAngle] = useState(0)
+  const [avatarAnchor, setAvatarAnchor] = useState<HTMLElement | null>(null)
+
+  const handleLogout = async () => {
+    setAvatarAnchor(null)
+    await logout()
+    navigate('/login')
+  }
 
   // Redirect users who haven't finished the flow yet
   useEffect(() => {
@@ -387,13 +398,19 @@ export default function CompletePage() {
         </Box>
 
         {/* Footer links */}
-        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100', display: 'flex', gap: 1.5 }}>
+        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100', display: 'flex', gap: 1.5, alignItems: 'center' }}>
           <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
             Privacy
           </Typography>
           <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
             Terms
           </Typography>
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title="Sign out">
+            <IconButton size="small" onClick={handleLogout} sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
+              <Logout sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -437,10 +454,34 @@ export default function CompletePage() {
             </IconButton>
           </Tooltip>
           <Tooltip title={user?.name ?? 'Profile'}>
-            <Avatar sx={{ width: 30, height: 30, bgcolor: '#CC0000', fontSize: 13, cursor: 'pointer' }}>
+            <Avatar
+              sx={{ width: 30, height: 30, bgcolor: '#CC0000', fontSize: 13, cursor: 'pointer' }}
+              onClick={e => setAvatarAnchor(e.currentTarget)}
+            >
               {initials}
             </Avatar>
           </Tooltip>
+
+          <Menu
+            anchorEl={avatarAnchor}
+            open={Boolean(avatarAnchor)}
+            onClose={() => setAvatarAnchor(null)}
+            PaperProps={{ elevation: 2, sx: { minWidth: 160, borderRadius: 2, mt: 0.5 } }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem disabled sx={{ opacity: '1 !important', pb: 0 }}>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {user?.email}
+              </Typography>
+            </MenuItem>
+            <MenuItem onClick={handleLogout} sx={{ color: 'error.main', mt: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <Logout fontSize="small" sx={{ color: 'error.main' }} />
+              </ListItemIcon>
+              <Typography variant="body2" fontWeight={600}>Sign out</Typography>
+            </MenuItem>
+          </Menu>
         </Box>
 
         {/* Scrollable content */}

@@ -354,9 +354,32 @@ export default function CompletePage() {
   }, [user?.id])
 
   // Derive partner profile progress from real data
+  // Weight per section: yet_to_be_added=0, draft/rejected=1, submitted=2, approved=3
+  const sectionStatusWeight: Record<string, number> = {
+    yet_to_be_added: 0,
+    draft: 1,
+    rejected: 1,
+    submitted: 2,
+    approved: 3,
+  }
+  const profileWeightTotal = sectionStatuses.reduce(
+    (sum, s) => sum + (sectionStatusWeight[s.status] ?? 0),
+    0,
+  )
   const approvedSections = sectionStatuses.filter(s => s.status === 'approved').length
+  const submittedSections = sectionStatuses.filter(
+    s => s.status === 'submitted' || s.status === 'approved',
+  ).length
+  const savedSections = sectionStatuses.filter(s => s.status !== 'yet_to_be_added').length
   const partnerProfileComplete = approvedSections === 6
-  const partnerProfileProgress = Math.round((approvedSections / 6) * 100)
+  // Max weight = 6 sections × 3 = 18
+  const partnerProfileProgress = Math.round((profileWeightTotal / 18) * 100)
+  const partnerProfileLabel =
+    submittedSections > 0
+      ? `${submittedSections} of 6 sections submitted`
+      : savedSections > 0
+        ? `${savedSections} of 6 sections saved`
+        : '0 of 6 sections completed'
 
   // Static placeholders for tasks without real tables yet
   const kycProgress = 30
@@ -612,7 +635,7 @@ export default function CompletePage() {
               title="Partner Profile"
               description="Basic partner information, contact details, and brand identity for the marketplace."
               status={partnerProfileComplete ? 'completed' : 'in_progress'}
-              progressLabel={`${approvedSections} of 6 sections approved`}
+              progressLabel={partnerProfileLabel}
               progressValue={partnerProfileProgress}
               linkLabel="View details"
               buttonLabel="CONTINUE SETUP"

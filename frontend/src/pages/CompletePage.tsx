@@ -27,6 +27,7 @@ import {
   SwapHoriz,
   LocalShipping,
   TrendingUp,
+  LogoutOutlined,
 } from '@mui/icons-material'
 
 // ── Sidebar nav item ───────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ function TaskCard({
   linkLabel,
   buttonLabel,
   onLinkClick,
+  onButtonClick,
 }: {
   icon: React.ReactNode
   title: string
@@ -100,6 +102,7 @@ function TaskCard({
   linkLabel?: string
   buttonLabel?: string
   onLinkClick?: () => void
+  onButtonClick?: () => void
 }) {
   const isCompleted = status === 'completed'
   return (
@@ -216,7 +219,7 @@ function TaskCard({
               <Button
                 variant="contained"
                 fullWidth
-                onClick={() => {}}
+                onClick={onButtonClick}
                 sx={{
                   bgcolor: '#CC0000',
                   '&:hover': { bgcolor: '#a00000' },
@@ -313,7 +316,7 @@ function GrowthCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CompletePage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [progressAngle, setProgressAngle] = useState(0)
   const [sectionStatuses, setSectionStatuses] = useState<{ section: string; status: string }[]>([])
@@ -420,13 +423,32 @@ export default function CompletePage() {
         </Box>
 
         {/* Footer links */}
-        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100', display: 'flex', gap: 1.5 }}>
-          <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
-            Privacy
-          </Typography>
-          <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
-            Terms
-          </Typography>
+        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
+            <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
+              Privacy
+            </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
+              Terms
+            </Typography>
+          </Box>
+          <Box
+            onClick={logout}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              color: 'text.secondary',
+              '&:hover': { color: '#CC0000' },
+              transition: 'color 0.15s',
+            }}
+          >
+            <LogoutOutlined sx={{ fontSize: 16 }} />
+            <Typography variant="caption" fontWeight={600}>
+              Log out
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
@@ -595,6 +617,7 @@ export default function CompletePage() {
               linkLabel="View details"
               buttonLabel="CONTINUE SETUP"
               onLinkClick={() => navigate('/seller-details')}
+              onButtonClick={() => navigate('/seller-details')}
             />
             <TaskCard
               icon={<Article fontSize="inherit" />}

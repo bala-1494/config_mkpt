@@ -25,6 +25,7 @@ import {
   Cancel,
   HourglassEmpty,
   PendingOutlined,
+  LogoutOutlined,
 } from '@mui/icons-material'
 import BasicInfoSection from './seller-details/BasicInfoSection'
 import AddressesSection from './seller-details/AddressesSection'
@@ -112,7 +113,7 @@ function SideNavItem({
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function SellerDetailsPage() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState<SectionKey>('basic_info')
   const [statuses, setStatuses] = useState<Record<SectionKey, SectionStatusRow>>({
@@ -275,13 +276,32 @@ export default function SellerDetailsPage() {
         </Box>
 
         {/* Footer */}
-        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100', display: 'flex', gap: 1.5 }}>
-          <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
-            Privacy
-          </Typography>
-          <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
-            Terms
-          </Typography>
+        <Box sx={{ px: 2.5, py: 2, borderTop: '1px solid', borderColor: 'grey.100' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
+            <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
+              Privacy
+            </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ cursor: 'pointer', '&:hover': { color: 'text.secondary' } }}>
+              Terms
+            </Typography>
+          </Box>
+          <Box
+            onClick={logout}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              color: 'text.secondary',
+              '&:hover': { color: '#CC0000' },
+              transition: 'color 0.15s',
+            }}
+          >
+            <LogoutOutlined sx={{ fontSize: 16 }} />
+            <Typography variant="caption" fontWeight={600}>
+              Log out
+            </Typography>
+          </Box>
         </Box>
       </Box>
 

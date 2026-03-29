@@ -646,6 +646,7 @@ export default function CompletePage() {
               progressLabel="Catalog Ready"
               progressValue={15}
               buttonLabel="ADD ITEMS"
+              onButtonClick={() => navigate('/item-listing')}
             />
           </Box>
 

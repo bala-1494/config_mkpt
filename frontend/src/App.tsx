@@ -8,6 +8,7 @@ import Onboarding from './pages/Onboarding'
 import VettingPage from './pages/VettingPage'
 import CompletePage from './pages/CompletePage'
 import SellerDetailsPage from './pages/SellerDetailsPage'
+import ItemListingPage from './pages/ItemListingPage'
 
 const theme = createTheme({
   palette: {
@@ -94,6 +95,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SellerDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/item-listing"
+        element={
+          <ProtectedRoute>
+            <ItemListingPage />
           </ProtectedRoute>
         }
       />

@@ -646,7 +646,10 @@ export default function CompletePage() {
               progressLabel="Catalog Ready"
               progressValue={15}
               buttonLabel="ADD ITEMS"
-              onButtonClick={() => navigate('/item-listing')}
+              onButtonClick={() => {
+                const submitted = localStorage.getItem('item_listing_submitted')
+                navigate(submitted ? '/inventory' : '/item-listing')
+              }}
             />
           </Box>
 

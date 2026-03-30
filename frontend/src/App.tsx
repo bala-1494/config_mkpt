@@ -9,6 +9,7 @@ import VettingPage from './pages/VettingPage'
 import CompletePage from './pages/CompletePage'
 import SellerDetailsPage from './pages/SellerDetailsPage'
 import ItemListingPage from './pages/ItemListingPage'
+import InventoryPage from './pages/InventoryPage'
 
 const theme = createTheme({
   palette: {
@@ -104,6 +105,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ItemListingPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute>
+            <InventoryPage />
           </ProtectedRoute>
         }
       />

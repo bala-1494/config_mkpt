@@ -28,6 +28,8 @@ import {
   LocalShipping,
   TrendingUp,
   LogoutOutlined,
+  ErrorOutline,
+  RadioButtonUnchecked,
 } from '@mui/icons-material'
 
 // ── Sidebar nav item ───────────────────────────────────────────────────────────
@@ -80,6 +82,8 @@ function SideNavItem({
   )
 }
 
+type TaskStatus = 'completed' | 'in_progress' | 'not_started' | 'needs_attention'
+
 // ── Mandatory task card ────────────────────────────────────────────────────────
 function TaskCard({
   icon,
@@ -88,6 +92,7 @@ function TaskCard({
   status,
   progressLabel,
   progressValue,
+  rejectedCount,
   linkLabel,
   buttonLabel,
   onLinkClick,
@@ -96,22 +101,51 @@ function TaskCard({
   icon: React.ReactNode
   title: string
   description: string
-  status: 'completed' | 'in_progress'
+  status: TaskStatus
   progressLabel?: string
   progressValue?: number
+  rejectedCount?: number
   linkLabel?: string
   buttonLabel?: string
   onLinkClick?: () => void
   onButtonClick?: () => void
 }) {
-  const isCompleted = status === 'completed'
+  const chipConfig: Record<TaskStatus, { label: string; bgcolor: string; color: string; icon?: React.ReactNode }> = {
+    completed:       { label: 'COMPLETED',       bgcolor: 'rgba(46,125,50,0.08)',  color: '#2e7d32', icon: <CheckCircle sx={{ fontSize: '13px !important', color: '#2e7d32 !important' }} /> },
+    in_progress:     { label: 'IN PROGRESS',     bgcolor: 'rgba(51,102,204,0.10)', color: '#3366cc' },
+    not_started:     { label: 'NOT STARTED',     bgcolor: 'rgba(0,0,0,0.05)',      color: 'text.secondary' },
+    needs_attention: { label: 'NEEDS ATTENTION', bgcolor: 'rgba(198,40,40,0.10)', color: '#c62828', icon: <ErrorOutline sx={{ fontSize: '13px !important', color: '#c62828 !important' }} /> },
+  }
+
+  const iconBgColor: Record<TaskStatus, string> = {
+    completed:       'rgba(46,125,50,0.10)',
+    in_progress:     'rgba(51,102,204,0.10)',
+    not_started:     'rgba(0,0,0,0.04)',
+    needs_attention: 'rgba(198,40,40,0.08)',
+  }
+  const iconColor: Record<TaskStatus, string> = {
+    completed:       '#2e7d32',
+    in_progress:     '#3366cc',
+    not_started:     '#9e9e9e',
+    needs_attention: '#c62828',
+  }
+  const barColor: Record<TaskStatus, string> = {
+    completed:       '#2e7d32',
+    in_progress:     '#CC0000',
+    not_started:     '#CC0000',
+    needs_attention: '#c62828',
+  }
+
+  const chip = chipConfig[status]
+  const showProgress = (status === 'in_progress' || status === 'needs_attention') && progressValue !== undefined
+
   return (
     <Paper
       elevation={0}
       sx={{
         p: 3,
         border: '1px solid',
-        borderColor: 'grey.200',
+        borderColor: status === 'needs_attention' ? 'rgba(198,40,40,0.25)' : 'grey.200',
         borderRadius: 3,
         bgcolor: '#fff',
         display: 'flex',
@@ -123,35 +157,20 @@ function TaskCard({
     >
       {/* Status badge */}
       <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-        {isCompleted ? (
-          <Chip
-            icon={<CheckCircle sx={{ fontSize: '14px !important', color: '#2e7d32 !important' }} />}
-            label="COMPLETED"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(46,125,50,0.08)',
-              color: '#2e7d32',
-              fontWeight: 700,
-              fontSize: '0.63rem',
-              letterSpacing: 0.5,
-              height: 22,
-              '& .MuiChip-icon': { ml: '6px' },
-            }}
-          />
-        ) : (
-          <Chip
-            label="IN PROGRESS"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(51,102,204,0.1)',
-              color: '#3366cc',
-              fontWeight: 700,
-              fontSize: '0.63rem',
-              letterSpacing: 0.5,
-              height: 22,
-            }}
-          />
-        )}
+        <Chip
+          icon={chip.icon as any}
+          label={chip.label}
+          size="small"
+          sx={{
+            bgcolor: chip.bgcolor,
+            color: chip.color,
+            fontWeight: 700,
+            fontSize: '0.62rem',
+            letterSpacing: 0.5,
+            height: 22,
+            '& .MuiChip-icon': chip.icon ? { ml: '5px' } : undefined,
+          }}
+        />
       </Box>
 
       {/* Icon */}
@@ -160,7 +179,7 @@ function TaskCard({
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: isCompleted ? 'rgba(46,125,50,0.1)' : 'rgba(51,102,204,0.1)',
+          bgcolor: iconBgColor[status],
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -168,7 +187,7 @@ function TaskCard({
           flexShrink: 0,
         }}
       >
-        <Box sx={{ color: isCompleted ? '#2e7d32' : '#3366cc', display: 'flex', fontSize: 22 }}>
+        <Box sx={{ color: iconColor[status], display: 'flex', fontSize: 22 }}>
           {icon}
         </Box>
       </Box>
@@ -182,7 +201,7 @@ function TaskCard({
 
       {/* Bottom action area */}
       <Box sx={{ mt: 'auto' }}>
-        {isCompleted && linkLabel && (
+        {status === 'completed' && linkLabel && (
           <Typography
             variant="body2"
             fontWeight={600}
@@ -194,7 +213,13 @@ function TaskCard({
           </Typography>
         )}
 
-        {!isCompleted && progressLabel !== undefined && progressValue !== undefined && (
+        {status === 'needs_attention' && rejectedCount !== undefined && rejectedCount > 0 && (
+          <Typography variant="caption" color="#c62828" fontWeight={600} display="block" mb={1.5} sx={{ fontSize: '0.75rem' }}>
+            {rejectedCount} section{rejectedCount > 1 ? 's' : ''} rejected — review required
+          </Typography>
+        )}
+
+        {showProgress && progressLabel !== undefined && (
           <>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
@@ -212,27 +237,28 @@ function TaskCard({
                 borderRadius: 3,
                 bgcolor: 'grey.200',
                 mb: 2,
-                '& .MuiLinearProgress-bar': { bgcolor: '#CC0000', borderRadius: 3 },
+                '& .MuiLinearProgress-bar': { bgcolor: barColor[status], borderRadius: 3 },
               }}
             />
-            {buttonLabel && (
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={onButtonClick}
-                sx={{
-                  bgcolor: '#CC0000',
-                  '&:hover': { bgcolor: '#a00000' },
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  fontSize: '0.8rem',
-                  letterSpacing: 0.5,
-                }}
-              >
-                {buttonLabel}
-              </Button>
-            )}
           </>
+        )}
+
+        {status !== 'completed' && buttonLabel && (
+          <Button
+            variant={status === 'not_started' ? 'outlined' : 'contained'}
+            fullWidth
+            onClick={onButtonClick}
+            startIcon={status === 'not_started' ? <RadioButtonUnchecked sx={{ fontSize: '16px !important' }} /> : undefined}
+            sx={
+              status === 'not_started'
+                ? { borderColor: 'grey.300', color: 'text.secondary', fontWeight: 700, borderRadius: 2, fontSize: '0.8rem', letterSpacing: 0.5, '&:hover': { borderColor: '#CC0000', color: '#CC0000', bgcolor: 'rgba(204,0,0,0.02)' } }
+                : status === 'needs_attention'
+                  ? { bgcolor: '#c62828', '&:hover': { bgcolor: '#a32020' }, fontWeight: 700, borderRadius: 2, fontSize: '0.8rem', letterSpacing: 0.5 }
+                  : { bgcolor: '#CC0000', '&:hover': { bgcolor: '#a00000' }, fontWeight: 700, borderRadius: 2, fontSize: '0.8rem', letterSpacing: 0.5 }
+            }
+          >
+            {buttonLabel}
+          </Button>
         )}
       </Box>
     </Paper>
@@ -353,22 +379,35 @@ export default function CompletePage() {
       })
   }, [user?.id])
 
-  // Derive partner profile progress from real data
+  // Derive partner profile state from real section data
   const approvedSections = sectionStatuses.filter(s => s.status === 'approved').length
-  const partnerProfileComplete = approvedSections === 6
+  const rejectedSections = sectionStatuses.filter(s => s.status === 'rejected').length
+  const activeSections   = sectionStatuses.filter(s => s.status !== 'yet_to_be_added').length
   const partnerProfileProgress = Math.round((approvedSections / 6) * 100)
 
-  // Static placeholders for tasks without real tables yet
-  const kycProgress = 30
-  const stripeComplete = false
-  const itemProgress = 15
+  const partnerProfileStatus: TaskStatus =
+    approvedSections === 6 ? 'completed' :
+    rejectedSections > 0  ? 'needs_attention' :
+    activeSections > 0    ? 'in_progress' :
+    'not_started'
 
-  const completedCount =
-    (partnerProfileComplete ? 1 : 0) + (stripeComplete ? 1 : 0)
+  // Item listing — driven by localStorage flag set after SUBMIT SELECTION
+  const itemListingSubmitted = !!localStorage.getItem('item_listing_submitted')
+  const itemListingStatus: TaskStatus = itemListingSubmitted ? 'in_progress' : 'not_started'
+  const itemListingProgress = itemListingSubmitted ? 50 : 0
+
+  // KYC and Stripe have no real data yet — show accurate not-started state
+  const kycStatus: TaskStatus    = 'not_started'
+  const stripeStatus: TaskStatus = 'not_started'
+
+  const completedCount = [partnerProfileStatus, kycStatus, stripeStatus, itemListingStatus]
+    .filter(s => s === 'completed').length
 
   const globalProgress = statusesLoaded
-    ? Math.round((partnerProfileProgress + kycProgress + (stripeComplete ? 100 : 0) + itemProgress) / 4)
+    ? Math.round((partnerProfileProgress + 0 + 0 + itemListingProgress) / 4)
     : 0
+
+  const hasRejections = rejectedSections > 0
 
   // Animate circular progress once data is loaded
   useEffect(() => {
@@ -540,17 +579,23 @@ export default function CompletePage() {
                   mb: 1.5,
                 }}
               >
-                <CheckCircle sx={{ color: '#fff', fontSize: 14 }} />
+                {hasRejections
+                  ? <ErrorOutline sx={{ color: '#fff', fontSize: 14 }} />
+                  : <CheckCircle sx={{ color: '#fff', fontSize: 14 }} />}
                 <Typography variant="caption" fontWeight={700} color="#fff" letterSpacing={0.5} sx={{ textTransform: 'uppercase', fontSize: '0.65rem' }}>
-                  No Critical Actions Pending
+                  {hasRejections ? 'Action Required' : 'No Critical Actions Pending'}
                 </Typography>
               </Box>
 
               <Typography variant="h4" fontWeight={800} color="#fff" mb={1}>
-                You're on track!
+                {hasRejections ? 'Review Required' : completedCount === 0 ? "Let's get started!" : "You're on track!"}
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', maxWidth: 460, lineHeight: 1.65 }}>
-                Complete the remaining tasks to start listing your inventory. Our team is currently reviewing your submitted details.
+                {hasRejections
+                  ? `${rejectedSections} section${rejectedSections > 1 ? 's' : ''} in your Partner Profile ${rejectedSections > 1 ? 'were' : 'was'} rejected. Please review the feedback and resubmit.`
+                  : completedCount === 0
+                    ? 'Complete the mandatory setup tasks below to start listing your inventory on the marketplace.'
+                    : 'Complete the remaining tasks to start listing your inventory. Our team is currently reviewing your submitted details.'}
               </Typography>
             </Box>
 
@@ -611,11 +656,17 @@ export default function CompletePage() {
               icon={<Person fontSize="inherit" />}
               title="Partner Profile"
               description="Basic partner information, contact details, and brand identity for the marketplace."
-              status={partnerProfileComplete ? 'completed' : 'in_progress'}
+              status={partnerProfileStatus}
               progressLabel={`${approvedSections} of 6 sections approved`}
               progressValue={partnerProfileProgress}
+              rejectedCount={rejectedSections}
               linkLabel="View details"
-              buttonLabel="CONTINUE SETUP"
+              buttonLabel={
+                partnerProfileStatus === 'not_started'     ? 'BEGIN SETUP' :
+                partnerProfileStatus === 'needs_attention' ? 'FIX ISSUES' :
+                partnerProfileStatus === 'in_progress'     ? 'RESUME SETUP' :
+                undefined
+              }
               onLinkClick={() => navigate('/seller-details')}
               onButtonClick={() => navigate('/seller-details')}
             />
@@ -623,33 +674,25 @@ export default function CompletePage() {
               icon={<Article fontSize="inherit" />}
               title="Documentation & KYC"
               description="Upload business registry and Know Your Customer documents for verification."
-              status="in_progress"
-              progressLabel="Verification Progress"
-              progressValue={30}
-              buttonLabel="CONTINUE VERIFICATION"
+              status={kycStatus}
+              buttonLabel="BEGIN VERIFICATION"
             />
             <TaskCard
               icon={<CreditCard fontSize="inherit" />}
               title="Stripe Account Enablement"
               description="Payment processing setup through Stripe for secure, automated global payouts."
-              status={stripeComplete ? 'completed' : 'in_progress'}
-              progressLabel="Account setup"
-              progressValue={0}
-              linkLabel="Manage Stripe settings"
+              status={stripeStatus}
               buttonLabel="CONNECT STRIPE"
             />
             <TaskCard
               icon={<List fontSize="inherit" />}
               title="Item Listing"
               description="Start adding your product catalog. High-quality imagery and detailed descriptions required."
-              status="in_progress"
-              progressLabel="Catalog Ready"
-              progressValue={15}
-              buttonLabel="ADD ITEMS"
-              onButtonClick={() => {
-                const submitted = localStorage.getItem('item_listing_submitted')
-                navigate(submitted ? '/inventory' : '/item-listing')
-              }}
+              status={itemListingStatus}
+              progressLabel={itemListingSubmitted ? 'Catalog submitted for review' : undefined}
+              progressValue={itemListingSubmitted ? itemListingProgress : undefined}
+              buttonLabel={itemListingSubmitted ? 'VIEW INVENTORY' : 'ADD ITEMS'}
+              onButtonClick={() => navigate(itemListingSubmitted ? '/inventory' : '/item-listing')}
             />
           </Box>
 

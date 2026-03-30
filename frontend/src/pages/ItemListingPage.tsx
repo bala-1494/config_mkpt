@@ -638,6 +638,10 @@ export default function ItemListingPage() {
             </Box>
             <Button
               variant="contained"
+              onClick={() => {
+                localStorage.setItem('item_listing_submitted', 'true')
+                navigate('/inventory')
+              }}
               sx={{
                 bgcolor: '#CC0000',
                 '&:hover': { bgcolor: '#a00000' },
